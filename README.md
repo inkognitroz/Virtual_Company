@@ -125,7 +125,10 @@ All data is stored locally in your browser using LocalStorage:
 - Chat messages
 - Session information
 
-**Note**: Data is stored locally in your browser. Clearing browser data will reset the application.
+**Important Notes**:
+- Data is stored locally in your browser. Clearing browser data will reset the application.
+- This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
+- No data is sent to external servers; everything stays in your browser.
 
 ## 🎯 Use Cases
 
