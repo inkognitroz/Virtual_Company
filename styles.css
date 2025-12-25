@@ -80,6 +80,14 @@ body {
     font-size: 0.9em;
 }
 
+.form-help {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.75em;
+    color: var(--gray-text);
+    font-style: italic;
+}
+
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -99,6 +107,16 @@ body {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Focus visible for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .btn {

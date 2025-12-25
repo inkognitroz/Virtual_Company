@@ -33,13 +33,21 @@ const showLoginLink = document.getElementById('showLogin');
 showRegisterLink.addEventListener('click', (e) => {
     e.preventDefault();
     loginForm.style.display = 'none';
+    loginForm.setAttribute('aria-hidden', 'true');
     registerForm.style.display = 'block';
+    registerForm.setAttribute('aria-hidden', 'false');
+    // Focus first input in register form
+    document.getElementById('reg-email').focus();
 });
 
 showLoginLink.addEventListener('click', (e) => {
     e.preventDefault();
     registerForm.style.display = 'none';
+    registerForm.setAttribute('aria-hidden', 'true');
     loginForm.style.display = 'block';
+    loginForm.setAttribute('aria-hidden', 'false');
+    // Focus first input in login form
+    document.getElementById('username').focus();
 });
 
 // Handle Login
