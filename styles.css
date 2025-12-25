@@ -433,7 +433,38 @@ body {
 
 #chatForm {
     display: flex;
+    flex-direction: column;
     gap: 10px;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-voice {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+}
+
+.btn-voice.listening {
+    background: var(--danger-color);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 #chatInput {
@@ -445,6 +476,46 @@ body {
     color: var(--light-text);
     resize: none;
     font-family: inherit;
+}
+
+.chat-controls button {
+    flex: 1;
+}
+
+/* Typing Indicator */
+.typing {
+    opacity: 0.8;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
 }
 
 /* Video Integration */
@@ -589,6 +660,45 @@ body {
     font-family: 'Courier New', monospace;
     font-size: 0.9em;
     margin-top: 5px;
+}
+
+/* AI Settings */
+.ai-settings {
+    margin-top: 25px;
+    padding: 20px;
+    background: var(--dark-tertiary);
+    border-radius: var(--border-radius);
+}
+
+.ai-settings h5 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.toggle-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.toggle-label span {
+    color: var(--light-text);
+    font-size: 1em;
+}
+
+.setting-note {
+    font-size: 0.85em;
+    color: var(--gray-text);
+    margin-top: 10px;
+    line-height: 1.5;
 }
 
 /* Responsive Design */

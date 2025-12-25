@@ -15,6 +15,14 @@ let roles = JSON.parse(localStorage.getItem('virtualCompanyRoles') || '[]');
 // Initialize chat messages
 let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages') || '[]');
 
+// AI Configuration
+let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
+
+// Voice recognition and synthesis
+let recognition = null;
+let synthesis = window.speechSynthesis;
+let isListening = false;
+
 // Navigation handling
 const navItems = document.querySelectorAll('.nav-item');
 const sections = document.querySelectorAll('.content-section');
@@ -179,7 +187,7 @@ function renderChatMessages() {
 }
 
 // Chat form handling
-document.getElementById('chatForm').addEventListener('submit', (e) => {
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const chatInput = document.getElementById('chatInput');
@@ -218,7 +226,199 @@ document.getElementById('chatForm').addEventListener('submit', (e) => {
     
     renderChatMessages();
     chatInput.value = '';
+    
+    // If user sent a message, generate AI response
+    if (chatRole.value === 'user' && roles.length > 0) {
+        await generateAIResponse(content);
+    }
 });
+
+// Generate AI Response
+async function generateAIResponse(userMessage) {
+    // Show typing indicator
+    showTypingIndicator();
+    
+    try {
+        // Select a random AI role to respond or use configured AI
+        const aiRoles = roles.filter(r => r.aiInstructions);
+        if (aiRoles.length === 0) return;
+        
+        // Randomly select an AI role to respond (or could be based on context)
+        const respondingRole = aiRoles[Math.floor(Math.random() * aiRoles.length)];
+        
+        let aiResponse = '';
+        
+        // Check if AI API is configured
+        if (aiConfig.apiKey && aiConfig.provider) {
+            // Call actual AI API
+            aiResponse = await callAIAPI(userMessage, respondingRole);
+        } else {
+            // Fallback to simulated response
+            aiResponse = generateSimulatedResponse(userMessage, respondingRole);
+        }
+        
+        // Add AI response to chat
+        const now = new Date();
+        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const aiMessage = {
+            sender: 'ai',
+            senderName: respondingRole.name,
+            avatar: respondingRole.avatar,
+            content: aiResponse,
+            time: timeString,
+            isAI: true
+        };
+        
+        // Remove typing indicator
+        removeTypingIndicator();
+        
+        chatMessages.push(aiMessage);
+        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        renderChatMessages();
+        
+        // Speak the response if voice is enabled
+        if (aiConfig.voiceEnabled) {
+            speakText(aiResponse);
+        }
+        
+    } catch (error) {
+        console.error('Error generating AI response:', error);
+        removeTypingIndicator();
+    }
+}
+
+// Call AI API (OpenAI, Claude, or custom)
+async function callAIAPI(userMessage, role) {
+    const provider = aiConfig.provider;
+    const apiKey = aiConfig.apiKey;
+    
+    try {
+        if (provider === 'openai') {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                        { role: 'system', content: role.aiInstructions },
+                        { role: 'user', content: userMessage }
+                    ],
+                    max_tokens: 500
+                })
+            });
+            
+            if (!response.ok) throw new Error('API request failed');
+            
+            const data = await response.json();
+            return data.choices[0].message.content;
+            
+        } else if (provider === 'claude') {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-sonnet-20240229',
+                    max_tokens: 500,
+                    messages: [
+                        { role: 'user', content: `${role.aiInstructions}\n\n${userMessage}` }
+                    ]
+                })
+            });
+            
+            if (!response.ok) throw new Error('API request failed');
+            
+            const data = await response.json();
+            return data.content[0].text;
+            
+        } else if (provider === 'custom' && aiConfig.endpoint) {
+            const response = await fetch(aiConfig.endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: userMessage,
+                    role: role.name,
+                    instructions: role.aiInstructions
+                })
+            });
+            
+            if (!response.ok) throw new Error('API request failed');
+            
+            const data = await response.json();
+            return data.response || data.message || data.text;
+        }
+    } catch (error) {
+        console.error('AI API Error:', error);
+        return generateSimulatedResponse(userMessage, role);
+    }
+    
+    return generateSimulatedResponse(userMessage, role);
+}
+
+// Generate simulated AI response (fallback)
+function generateSimulatedResponse(userMessage, role) {
+    const responses = {
+        'Project Manager': [
+            `Great point! Let's break this down into actionable tasks. I'll create a timeline and assign responsibilities.`,
+            `I agree. We should prioritize this and allocate resources accordingly. Let me schedule a follow-up meeting.`,
+            `That's an important consideration. I'll add it to our project roadmap and track the progress.`,
+            `Excellent suggestion! This aligns well with our current sprint goals. Let's implement it in the next iteration.`
+        ],
+        'Lead Developer': [
+            `From a technical perspective, we should consider scalability and maintainability here.`,
+            `I recommend we implement this using best practices and add proper test coverage.`,
+            `Good idea. We'll need to refactor some code, but it will improve our architecture significantly.`,
+            `Let's review the technical requirements and ensure we have the right dependencies in place.`
+        ],
+        'AI Assistant': [
+            `I can help with that! Based on the context, here's what I suggest...`,
+            `Let me analyze this for you. The key considerations are...`,
+            `That's an interesting question. Here's my recommendation based on best practices...`,
+            `I've processed your request. Here are the main points to consider...`
+        ]
+    };
+    
+    const roleResponses = responses[role.name] || responses['AI Assistant'];
+    const randomResponse = roleResponses[Math.floor(Math.random() * roleResponses.length)];
+    
+    return randomResponse;
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message role typing';
+    typingDiv.innerHTML = `
+        <div class="message-header">
+            <span class="message-avatar">🤖</span>
+            <span>AI is typing...</span>
+        </div>
+        <div class="typing-dots">
+            <span></span><span></span><span></span>
+        </div>
+    `;
+    chatMessagesContainer.appendChild(typingDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+    const indicator = document.getElementById('typing-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
 
 // ========== VIDEO CALL INTEGRATIONS ==========
 
@@ -270,6 +470,8 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 renderRoles();
 updateChatRoleSelector();
 renderChatMessages();
+initializeVoiceRecognition();
+setupAIConfigHandlers();
 
 // Add some default roles if none exist
 if (roles.length === 0) {
@@ -301,4 +503,154 @@ if (roles.length === 0) {
     localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
     renderRoles();
     updateChatRoleSelector();
+}
+
+// ========== VOICE CAPABILITIES ==========
+
+// Initialize speech recognition
+function initializeVoiceRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('chatInput').value = transcript;
+            isListening = false;
+            updateVoiceButton();
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            isListening = false;
+            updateVoiceButton();
+        };
+        
+        recognition.onend = () => {
+            isListening = false;
+            updateVoiceButton();
+        };
+    }
+}
+
+// Text to speech
+function speakText(text) {
+    if (!synthesis) return;
+    
+    // Cancel any ongoing speech
+    synthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    
+    synthesis.speak(utterance);
+}
+
+// Toggle voice input
+function toggleVoiceInput() {
+    if (!recognition) {
+        alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+        return;
+    }
+    
+    if (isListening) {
+        recognition.stop();
+        isListening = false;
+    } else {
+        recognition.start();
+        isListening = true;
+    }
+    
+    updateVoiceButton();
+}
+
+// Update voice button appearance
+function updateVoiceButton() {
+    const voiceBtn = document.getElementById('voiceInputBtn');
+    if (voiceBtn) {
+        if (isListening) {
+            voiceBtn.textContent = '🎤 Listening...';
+            voiceBtn.classList.add('listening');
+        } else {
+            voiceBtn.textContent = '🎤 Voice';
+            voiceBtn.classList.remove('listening');
+        }
+    }
+}
+
+// ========== AI CONFIGURATION ==========
+
+// Setup AI configuration handlers
+function setupAIConfigHandlers() {
+    // OpenAI Connect
+    const openaiConnectBtn = document.querySelector('.ai-model-card:nth-child(1) button');
+    if (openaiConnectBtn) {
+        openaiConnectBtn.addEventListener('click', () => {
+            const apiKeyInput = document.querySelector('.ai-model-card:nth-child(1) input');
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (apiKey) {
+                aiConfig.provider = 'openai';
+                aiConfig.apiKey = apiKey;
+                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                alert('OpenAI connected successfully! AI responses will now use GPT-3.5.');
+                apiKeyInput.value = '';
+            } else {
+                alert('Please enter your OpenAI API key');
+            }
+        });
+    }
+    
+    // Claude Connect
+    const claudeConnectBtn = document.querySelector('.ai-model-card:nth-child(2) button');
+    if (claudeConnectBtn) {
+        claudeConnectBtn.addEventListener('click', () => {
+            const apiKeyInput = document.querySelector('.ai-model-card:nth-child(2) input');
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (apiKey) {
+                aiConfig.provider = 'claude';
+                aiConfig.apiKey = apiKey;
+                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                alert('Claude connected successfully! AI responses will now use Claude.');
+                apiKeyInput.value = '';
+            } else {
+                alert('Please enter your Claude API key');
+            }
+        });
+    }
+    
+    // Custom API Connect
+    const customConnectBtn = document.querySelector('.ai-model-card:nth-child(3) button');
+    if (customConnectBtn) {
+        customConnectBtn.addEventListener('click', () => {
+            const endpointInput = document.querySelector('.ai-model-card:nth-child(3) input');
+            const endpoint = endpointInput.value.trim();
+            
+            if (endpoint) {
+                aiConfig.provider = 'custom';
+                aiConfig.endpoint = endpoint;
+                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                alert('Custom API connected successfully!');
+                endpointInput.value = '';
+            } else {
+                alert('Please enter your API endpoint');
+            }
+        });
+    }
+    
+    // Toggle voice output
+    const voiceToggle = document.getElementById('voiceToggle');
+    if (voiceToggle) {
+        voiceToggle.checked = aiConfig.voiceEnabled || false;
+        voiceToggle.addEventListener('change', (e) => {
+            aiConfig.voiceEnabled = e.target.checked;
+            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+        });
+    }
 }

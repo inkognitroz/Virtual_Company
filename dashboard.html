@@ -112,8 +112,13 @@
                             </select>
                         </div>
                         <form id="chatForm">
-                            <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
-                            <button type="submit" class="btn btn-primary">Send</button>
+                            <div class="chat-input-wrapper">
+                                <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
+                                <div class="chat-controls">
+                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()">🎤 Voice</button>
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -184,17 +189,18 @@
                         
                         <div class="instruction-section">
                             <h4>2. Supported AI Models</h4>
+                            <p>Connect your AI provider to enable real-time responses:</p>
                             <div class="ai-models-grid">
                                 <div class="ai-model-card">
                                     <h5>OpenAI GPT</h5>
                                     <p>Use ChatGPT or GPT-4 API</p>
-                                    <input type="text" placeholder="API Key" class="integration-input">
+                                    <input type="password" placeholder="API Key" class="integration-input">
                                     <button class="btn btn-secondary">Connect</button>
                                 </div>
                                 <div class="ai-model-card">
                                     <h5>Claude</h5>
                                     <p>Anthropic's Claude API</p>
-                                    <input type="text" placeholder="API Key" class="integration-input">
+                                    <input type="password" placeholder="API Key" class="integration-input">
                                     <button class="btn btn-secondary">Connect</button>
                                 </div>
                                 <div class="ai-model-card">
@@ -203,6 +209,14 @@
                                     <input type="text" placeholder="API Endpoint" class="integration-input">
                                     <button class="btn btn-secondary">Connect</button>
                                 </div>
+                            </div>
+                            <div class="ai-settings">
+                                <h5>Voice Settings</h5>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="voiceToggle">
+                                    <span>Enable AI Voice Responses (Text-to-Speech)</span>
+                                </label>
+                                <p class="setting-note">When enabled, AI responses will be spoken aloud. Use the 🎤 Voice button in chat to speak your messages.</p>
                             </div>
                         </div>
                         
