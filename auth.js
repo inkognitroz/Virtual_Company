@@ -1,5 +1,24 @@
 // Authentication JavaScript
 
+// Utility function to sanitize input (prevent XSS)
+function sanitizeInput(input) {
+    const div = document.createElement('div');
+    div.textContent = input;
+    return div.innerHTML;
+}
+
+// Utility function to validate email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Utility function to validate password strength
+function isValidPassword(password) {
+    // Minimum 8 characters, at least one letter and one number
+    return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
+}
+
 // Check if user is already logged in
 if (localStorage.getItem('virtualCompanyUser')) {
     window.location.href = 'dashboard.html';
@@ -27,8 +46,19 @@ showLoginLink.addEventListener('click', (e) => {
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const username = document.getElementById('username').value;
+    const username = sanitizeInput(document.getElementById('username').value.trim());
     const password = document.getElementById('password').value;
+    
+    // Validate inputs
+    if (!username || !password) {
+        alert('Please enter both username/email and password.');
+        return;
+    }
+    
+    if (username.length < 3) {
+        alert('Username/email must be at least 3 characters long.');
+        return;
+    }
     
     // Get stored users
     const users = JSON.parse(localStorage.getItem('virtualCompanyUsers') || '[]');
@@ -57,10 +87,41 @@ loginForm.addEventListener('submit', (e) => {
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const email = document.getElementById('reg-email').value;
-    const username = document.getElementById('reg-username').value;
+    const email = sanitizeInput(document.getElementById('reg-email').value.trim());
+    const username = sanitizeInput(document.getElementById('reg-username').value.trim());
     const password = document.getElementById('reg-password').value;
-    const name = document.getElementById('reg-name').value;
+    const name = sanitizeInput(document.getElementById('reg-name').value.trim());
+    
+    // Validate inputs
+    if (!email || !username || !password || !name) {
+        alert('Please fill in all fields.');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+    
+    if (username.length < 3 || username.length > 20) {
+        alert('Username must be between 3 and 20 characters.');
+        return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        alert('Username can only contain letters, numbers, and underscores.');
+        return;
+    }
+    
+    if (!isValidPassword(password)) {
+        alert('Password must be at least 8 characters long and contain both letters and numbers.');
+        return;
+    }
+    
+    if (name.length < 2 || name.length > 50) {
+        alert('Name must be between 2 and 50 characters.');
+        return;
+    }
     
     // Get stored users
     const users = JSON.parse(localStorage.getItem('virtualCompanyUsers') || '[]');
@@ -77,7 +138,7 @@ registerForm.addEventListener('submit', (e) => {
     users.push({
         email,
         username,
-        password,
+        password, // Note: In production, this should be hashed
         name
     });
     
