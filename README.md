@@ -11,13 +11,13 @@ Virtual Company is an AI-based virtual company that can be set up in minutes. Th
 ## Quick start (minimal example)
 1) **Define mission & goals**  
    ```bash
-   vc init --mission "Launch Q1 marketing campaign" --goal "Generate 200 SQLs"
+   vc init --mission "Launch Q1 marketing campaign" --goal "Generate 200 Sales Qualified Leads (SQLs)"
    ```
 2) **Create roles** (examples)  
    ```bash
-   vc role add strategist   --skills "gtm, segmentation" --owner you@example.com
-   vc role add copywriter  --skills "short-form, brand-voice"
-   vc role add analyst     --skills "sql, dashboards"
+   vc role add strategist --skills "go-to-market, segmentation" --owner you@example.com
+   vc role add copywriter --skills "short-form, brand-voice" --owner content@example.com
+   vc role add analyst    --skills "sql, dashboards" --owner data@example.com
    ```
 3) **Trigger automation**  
    ```bash
@@ -28,11 +28,12 @@ Virtual Company is an AI-based virtual company that can be set up in minutes. Th
    vc artifacts list
    vc artifacts get campaign-brief.md
    ```
-Commands reflect the intended interfaces; adapt to the implementation details in this repo.
 
 ## Quality gates
 - **Lint/tests:** Add a basic CI workflow (e.g., GitHub Actions) that runs formatting/lint and unit tests on PRs.
-- **Sample tests to add:** Validate role assignment logic (e.g., ensuring required skills are present before task assignment) and goal decomposition (tasks are created for each milestone).
+- **Sample tests to add when extending the suite:**
+  - Validate role assignment logic (e.g., ensuring required skills are present before task assignment).
+  - Validate goal decomposition so tasks are created for each milestone.
 - **Definition of done:** CI green, documentation updated, and security checks pass.
 
 ## Security & privacy notes
@@ -47,3 +48,6 @@ Commands reflect the intended interfaces; adapt to the implementation details in
 - Observability: Add run dashboards, alerts on failures, and cost tracking for AI calls.
 - Governance: Add approval steps, retention policies, and redaction pipelines.
 - Extensibility: Plugin system for custom tools and models.
+
+## Development notes
+- The quick-start commands reflect the target CLI interface. For partial implementations, follow the same sequence by: (1) setting mission/goals in config files or environment, (2) registering roles in the role registry file or database seeding script, and (3) invoking the orchestration script/API to run goals.
