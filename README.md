@@ -131,6 +131,7 @@ All data is stored locally in your browser using LocalStorage:
 - No data is sent to external servers; everything stays in your browser.
 
 ### Product Readiness (current status)
+- Current demo limitations:
 - No backend/API today: authentication, storage, rate limits, billing, and audit logs are not implemented.
 - Chat is single-user/local (LocalStorage) and not real-time multi-user; there is no WebSocket/SSE infrastructure.
 - Video/voice uses external links (Meet/Teams/WhatsApp); there is no embedded WebRTC room or AI voice participation.
