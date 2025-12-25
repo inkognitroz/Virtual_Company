@@ -130,6 +130,13 @@ All data is stored locally in your browser using LocalStorage:
 - This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
 - No data is sent to external servers; everything stays in your browser.
 
+### Product Readiness (current status)
+- No backend/API today: authentication, storage, rate limits, billing, and audit logs are not implemented.
+- Chat is single-user/local (LocalStorage) and not real-time multi-user; there is no WebSocket/SSE infrastructure.
+- Video/voice uses external links (Meet/Teams/WhatsApp); there is no embedded WebRTC room or AI voice participation.
+- AI calls are front-end only; to ship, add server-side key management, logging, and safety/abuse controls.
+- Security/compliance artifacts (privacy policy, terms, data deletion/export) are not included.
+
 ## 🎯 Use Cases
 
 - **Startup Teams**: Quickly set up virtual team structures
