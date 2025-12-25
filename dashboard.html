@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Company - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Virtual Company</h2>
+                <div class="user-info">
+                    <div class="avatar" id="userAvatar">👤</div>
+                    <span id="userName">User</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="roles">
+                    <span class="icon">👥</span>
+                    <span>Roles & Team</span>
+                </a>
+                <a href="#" class="nav-item" data-section="chat">
+                    <span class="icon">💬</span>
+                    <span>Group Chat</span>
+                </a>
+                <a href="#" class="nav-item" data-section="video">
+                    <span class="icon">📹</span>
+                    <span>Video Calls</span>
+                </a>
+                <a href="#" class="nav-item" data-section="ai">
+                    <span class="icon">🤖</span>
+                    <span>AI Integration</span>
+                </a>
+            </nav>
+            
+            <button id="logoutBtn" class="btn btn-secondary logout-btn">Logout</button>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Roles Section -->
+            <section id="roles-section" class="content-section active">
+                <div class="section-header">
+                    <h1>Roles & Team Management</h1>
+                    <button class="btn btn-primary" id="addRoleBtn">+ Add Role</button>
+                </div>
+                
+                <div class="roles-grid" id="rolesGrid">
+                    <!-- Roles will be dynamically added here -->
+                </div>
+                
+                <!-- Add Role Modal -->
+                <div id="addRoleModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h2>Add New Role</h2>
+                        <form id="addRoleForm">
+                            <div class="form-group">
+                                <label for="roleName">Role Name</label>
+                                <input type="text" id="roleName" required placeholder="e.g., Project Manager">
+                            </div>
+                            <div class="form-group">
+                                <label for="roleAvatar">Avatar</label>
+                                <select id="roleAvatar" required>
+                                    <option value="👨‍💼">👨‍💼 Manager</option>
+                                    <option value="👩‍💻">👩‍💻 Developer</option>
+                                    <option value="👨‍🎨">👨‍🎨 Designer</option>
+                                    <option value="👩‍🔬">👩‍🔬 Researcher</option>
+                                    <option value="👨‍🏫">👨‍🏫 Trainer</option>
+                                    <option value="👩‍⚖️">👩‍⚖️ Legal</option>
+                                    <option value="👨‍💰">👨‍💰 Finance</option>
+                                    <option value="👩‍🔧">👩‍🔧 Support</option>
+                                    <option value="🤖">🤖 AI Assistant</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="roleDescription">Description</label>
+                                <textarea id="roleDescription" rows="3" placeholder="Role responsibilities..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="aiInstructions">AI Model Instructions</label>
+                                <textarea id="aiInstructions" rows="4" placeholder="Instructions for LLM to understand this role's behavior and responsibilities..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Role</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Chat Section -->
+            <section id="chat-section" class="content-section">
+                <div class="section-header">
+                    <h1>Group Chat</h1>
+                </div>
+                
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="system-message">
+                            Welcome to the Virtual Company group chat. Start collaborating with your AI team!
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <div class="role-selector">
+                            <label for="chatRole">Send as:</label>
+                            <select id="chatRole">
+                                <option value="user">Yourself</option>
+                            </select>
+                        </div>
+                        <form id="chatForm">
+                            <div class="chat-input-wrapper">
+                                <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
+                                <div class="chat-controls">
+                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()">🎤 Voice</button>
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Video Section -->
+            <section id="video-section" class="content-section">
+                <div class="section-header">
+                    <h1>Video Call Integration</h1>
+                </div>
+                
+                <div class="video-integrations">
+                    <div class="integration-card">
+                        <div class="integration-icon">📹</div>
+                        <h3>Google Meet</h3>
+                        <p>Start or join a Google Meet video call</p>
+                        <input type="text" id="meetLink" placeholder="Paste Google Meet link..." class="integration-input">
+                        <div class="integration-actions">
+                            <button class="btn btn-primary" id="joinMeetBtn">Join Meeting</button>
+                            <button class="btn btn-secondary" id="createMeetBtn">Create New</button>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card">
+                        <div class="integration-icon">💼</div>
+                        <h3>Microsoft Teams</h3>
+                        <p>Connect with Microsoft Teams</p>
+                        <input type="text" id="teamsLink" placeholder="Paste Teams meeting link..." class="integration-input">
+                        <div class="integration-actions">
+                            <button class="btn btn-primary" id="joinTeamsBtn">Join Meeting</button>
+                            <button class="btn btn-secondary" id="createTeamsBtn">Create New</button>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card">
+                        <div class="integration-icon">💚</div>
+                        <h3>WhatsApp</h3>
+                        <p>Create or join WhatsApp group chat</p>
+                        <input type="text" id="whatsappLink" placeholder="Paste WhatsApp group link..." class="integration-input">
+                        <div class="integration-actions">
+                            <button class="btn btn-primary" id="joinWhatsAppBtn">Join Group</button>
+                            <button class="btn btn-secondary" id="createWhatsAppBtn">Create Group</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- AI Integration Section -->
+            <section id="ai-section" class="content-section">
+                <div class="section-header">
+                    <h1>AI Model Integration</h1>
+                </div>
+                
+                <div class="ai-integration-content">
+                    <div class="info-box">
+                        <h3>📚 Instructions for LLM Integration</h3>
+                        <p>The Virtual Company system is designed to work with AI language models. Here's how to connect:</p>
+                        
+                        <div class="instruction-section">
+                            <h4>1. Role-Based AI Prompts</h4>
+                            <p>Each role you create has custom AI instructions. When communicating with an AI model:</p>
+                            <ul>
+                                <li>Select the role from the chat interface</li>
+                                <li>The AI will respond according to that role's instructions</li>
+                                <li>Use specific, clear prompts for better responses</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="instruction-section">
+                            <h4>2. Supported AI Models</h4>
+                            <p>Connect your AI provider to enable real-time responses:</p>
+                            <div class="ai-models-grid">
+                                <div class="ai-model-card">
+                                    <h5>OpenAI GPT</h5>
+                                    <p>Use ChatGPT or GPT-4 API</p>
+                                    <input type="password" placeholder="API Key" class="integration-input">
+                                    <button class="btn btn-secondary">Connect</button>
+                                </div>
+                                <div class="ai-model-card">
+                                    <h5>Claude</h5>
+                                    <p>Anthropic's Claude API</p>
+                                    <input type="password" placeholder="API Key" class="integration-input">
+                                    <button class="btn btn-secondary">Connect</button>
+                                </div>
+                                <div class="ai-model-card">
+                                    <h5>Custom API</h5>
+                                    <p>Your own AI endpoint</p>
+                                    <input type="text" placeholder="API Endpoint" class="integration-input">
+                                    <button class="btn btn-secondary">Connect</button>
+                                </div>
+                            </div>
+                            <div class="ai-settings">
+                                <h5>Voice Settings</h5>
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="voiceToggle">
+                                    <span>Enable AI Voice Responses (Text-to-Speech)</span>
+                                </label>
+                                <p class="setting-note">When enabled, AI responses will be spoken aloud. Use the 🎤 Voice button in chat to speak your messages.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="instruction-section">
+                            <h4>3. Prompt Templates</h4>
+                            <p>Example prompts for different scenarios:</p>
+                            <div class="prompt-examples">
+                                <div class="prompt-example">
+                                    <strong>Project Planning:</strong>
+                                    <code>"As the Project Manager, create a timeline for launching our new product feature."</code>
+                                </div>
+                                <div class="prompt-example">
+                                    <strong>Code Review:</strong>
+                                    <code>"As the Lead Developer, review this code and suggest improvements."</code>
+                                </div>
+                                <div class="prompt-example">
+                                    <strong>Strategy Session:</strong>
+                                    <code>"All roles: Let's brainstorm marketing strategies for Q1."</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="dashboard.js"></script>
+</body>
+</html>
