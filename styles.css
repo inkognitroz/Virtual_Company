@@ -221,8 +221,14 @@ body {
     font-size: 1.3em;
 }
 
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--dark-tertiary);
+}
+
 .logout-btn {
-    margin-top: 20px;
+    margin-top: 10px;
     width: 100%;
 }
 

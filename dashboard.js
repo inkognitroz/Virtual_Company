@@ -70,6 +70,102 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     window.location.href = 'index.html';
 });
 
+// ========== DATA EXPORT/IMPORT ==========
+
+// Export data
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+    try {
+        const exportData = {
+            roles: roles,
+            chatMessages: chatMessages,
+            exportDate: new Date().toISOString(),
+            version: '1.0.0'
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `virtual-company-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert('Data exported successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export data. Please try again.');
+    }
+});
+
+// Import data
+document.getElementById('importDataBtn').addEventListener('click', () => {
+    document.getElementById('importDataFile').click();
+});
+
+document.getElementById('importDataFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const importData = JSON.parse(event.target.result);
+            
+            // Validate import data structure
+            if (!importData.roles || !Array.isArray(importData.roles)) {
+                throw new Error('Invalid data format: roles missing or invalid');
+            }
+            
+            if (!importData.chatMessages || !Array.isArray(importData.chatMessages)) {
+                throw new Error('Invalid data format: chatMessages missing or invalid');
+            }
+            
+            // Ask for confirmation
+            const confirmImport = confirm(
+                `This will import:\n` +
+                `- ${importData.roles.length} role(s)\n` +
+                `- ${importData.chatMessages.length} chat message(s)\n\n` +
+                `Your current data will be replaced. Continue?`
+            );
+            
+            if (!confirmImport) return;
+            
+            // Import data
+            roles = importData.roles;
+            chatMessages = importData.chatMessages;
+            
+            // Save to localStorage
+            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+            
+            // Refresh UI
+            renderRoles();
+            updateChatRoleSelector();
+            renderChatMessages();
+            
+            alert('Data imported successfully!');
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Failed to import data. Please ensure the file is a valid Virtual Company export.');
+        }
+        
+        // Reset file input
+        e.target.value = '';
+    };
+    
+    reader.onerror = () => {
+        alert('Failed to read file. Please try again.');
+        e.target.value = '';
+    };
+    
+    reader.readAsText(file);
+});
+
 // ========== ROLES MANAGEMENT ==========
 
 // Modal handling
