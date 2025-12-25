@@ -1,10 +1,12 @@
 // Authentication JavaScript
 
-// Utility function to sanitize input (prevent XSS)
-function sanitizeInput(input) {
-    const div = document.createElement('div');
-    div.textContent = input;
-    return div.innerHTML;
+// Utility function to validate and clean input
+function validateInput(input, maxLength = 255) {
+    if (typeof input !== 'string') return '';
+    // Trim whitespace
+    const cleaned = input.trim();
+    // Limit length
+    return cleaned.substring(0, maxLength);
 }
 
 // Utility function to validate email
@@ -54,7 +56,7 @@ showLoginLink.addEventListener('click', (e) => {
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const username = sanitizeInput(document.getElementById('username').value.trim());
+    const username = validateInput(document.getElementById('username').value, 100);
     const password = document.getElementById('password').value;
     
     // Validate inputs
@@ -95,10 +97,10 @@ loginForm.addEventListener('submit', (e) => {
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const email = sanitizeInput(document.getElementById('reg-email').value.trim());
-    const username = sanitizeInput(document.getElementById('reg-username').value.trim());
+    const email = validateInput(document.getElementById('reg-email').value, 100);
+    const username = validateInput(document.getElementById('reg-username').value, 20);
     const password = document.getElementById('reg-password').value;
-    const name = sanitizeInput(document.getElementById('reg-name').value.trim());
+    const name = validateInput(document.getElementById('reg-name').value, 50);
     
     // Validate inputs
     if (!email || !username || !password || !name) {

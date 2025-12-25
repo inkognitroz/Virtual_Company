@@ -1,14 +1,17 @@
 // Dashboard JavaScript
 
-// Utility function to sanitize HTML input (prevent XSS)
-function sanitizeHTML(input) {
-    const div = document.createElement('div');
-    div.textContent = input;
-    return div.innerHTML;
+// Utility function to validate and clean input (prevent XSS)
+function validateInput(input, maxLength = 5000) {
+    if (typeof input !== 'string') return '';
+    // Trim whitespace
+    const cleaned = input.trim();
+    // Limit length
+    return cleaned.substring(0, maxLength);
 }
 
 // Utility function to escape HTML for display
 function escapeHTML(text) {
+    if (!text) return '';
     const map = {
         '&': '&amp;',
         '<': '&lt;',
@@ -17,7 +20,7 @@ function escapeHTML(text) {
         "'": '&#x27;',
         "/": '&#x2F;',
     };
-    return text.replace(/[&<>"'/]/g, (char) => map[char]);
+    return String(text).replace(/[&<>"'/]/g, (char) => map[char]);
 }
 
 // Check if user is logged in
@@ -191,10 +194,10 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const roleName = sanitizeHTML(document.getElementById('roleName').value.trim());
+    const roleName = validateInput(document.getElementById('roleName').value, 50);
     const roleAvatar = document.getElementById('roleAvatar').value;
-    const roleDescription = sanitizeHTML(document.getElementById('roleDescription').value.trim());
-    const aiInstructions = sanitizeHTML(document.getElementById('aiInstructions').value.trim());
+    const roleDescription = validateInput(document.getElementById('roleDescription').value, 500);
+    const aiInstructions = validateInput(document.getElementById('aiInstructions').value, 2000);
     
     // Validate inputs
     if (!roleName || roleName.length < 2) {
@@ -334,11 +337,11 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     
     const chatInput = document.getElementById('chatInput');
     const chatRole = document.getElementById('chatRole');
-    const content = sanitizeHTML(chatInput.value.trim());
+    const content = validateInput(chatInput.value, 5000);
     
     if (!content) return;
     
-    // Validate message length
+    // Validate message length (already handled by validateInput, but double-check)
     if (content.length > 5000) {
         alert('Message is too long. Please keep it under 5000 characters.');
         return;
