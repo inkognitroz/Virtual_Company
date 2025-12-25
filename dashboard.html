@@ -3,41 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Virtual Company Dashboard - Manage your AI-powered virtual team">
     <title>Virtual Company - Dashboard</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" role="navigation" aria-label="Main navigation">
             <div class="sidebar-header">
                 <h2>Virtual Company</h2>
-                <div class="user-info">
-                    <div class="avatar" id="userAvatar">👤</div>
+                <div class="user-info" role="status" aria-live="polite">
+                    <div class="avatar" id="userAvatar" aria-hidden="true">👤</div>
                     <span id="userName">User</span>
                 </div>
             </div>
             
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-section="roles">
-                    <span class="icon">👥</span>
+            <nav class="sidebar-nav" aria-label="Dashboard sections">
+                <a href="#" class="nav-item active" data-section="roles" aria-label="Navigate to Roles and Team section" aria-current="page">
+                    <span class="icon" aria-hidden="true">👥</span>
                     <span>Roles & Team</span>
                 </a>
-                <a href="#" class="nav-item" data-section="chat">
-                    <span class="icon">💬</span>
+                <a href="#" class="nav-item" data-section="chat" aria-label="Navigate to Group Chat section">
+                    <span class="icon" aria-hidden="true">💬</span>
                     <span>Group Chat</span>
                 </a>
-                <a href="#" class="nav-item" data-section="video">
-                    <span class="icon">📹</span>
+                <a href="#" class="nav-item" data-section="video" aria-label="Navigate to Video Calls section">
+                    <span class="icon" aria-hidden="true">📹</span>
                     <span>Video Calls</span>
                 </a>
-                <a href="#" class="nav-item" data-section="ai">
-                    <span class="icon">🤖</span>
+                <a href="#" class="nav-item" data-section="ai" aria-label="Navigate to AI Integration section">
+                    <span class="icon" aria-hidden="true">🤖</span>
                     <span>AI Integration</span>
                 </a>
             </nav>
             
-            <button id="logoutBtn" class="btn btn-secondary logout-btn">Logout</button>
+            <div class="sidebar-footer">
+                <button id="exportDataBtn" class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 10px;" aria-label="Export your roles and chat data">
+                    <span aria-hidden="true">📥</span> Export Data
+                </button>
+                <button id="importDataBtn" class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 10px;" aria-label="Import roles and chat data from file">
+                    <span aria-hidden="true">📤</span> Import Data
+                </button>
+                <input type="file" id="importDataFile" accept=".json" style="display: none;" aria-label="Select JSON file to import">
+            </div>
+            
+            <button id="logoutBtn" class="btn btn-secondary logout-btn" aria-label="Logout from Virtual Company">Logout</button>
         </aside>
         
         <!-- Main Content -->

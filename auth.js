@@ -1,5 +1,26 @@
 // Authentication JavaScript
 
+// Utility function to validate and clean input
+function validateInput(input, maxLength = 255) {
+    if (typeof input !== 'string') return '';
+    // Trim whitespace
+    const cleaned = input.trim();
+    // Limit length
+    return cleaned.substring(0, maxLength);
+}
+
+// Utility function to validate email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Utility function to validate password strength
+function isValidPassword(password) {
+    // Minimum 8 characters, at least one letter and one number
+    return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
+}
+
 // Check if user is already logged in
 if (localStorage.getItem('virtualCompanyUser')) {
     window.location.href = 'dashboard.html';
@@ -14,21 +35,40 @@ const showLoginLink = document.getElementById('showLogin');
 showRegisterLink.addEventListener('click', (e) => {
     e.preventDefault();
     loginForm.style.display = 'none';
+    loginForm.setAttribute('aria-hidden', 'true');
     registerForm.style.display = 'block';
+    registerForm.setAttribute('aria-hidden', 'false');
+    // Focus first input in register form
+    document.getElementById('reg-email').focus();
 });
 
 showLoginLink.addEventListener('click', (e) => {
     e.preventDefault();
     registerForm.style.display = 'none';
+    registerForm.setAttribute('aria-hidden', 'true');
     loginForm.style.display = 'block';
+    loginForm.setAttribute('aria-hidden', 'false');
+    // Focus first input in login form
+    document.getElementById('username').focus();
 });
 
 // Handle Login
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const username = document.getElementById('username').value;
+    const username = validateInput(document.getElementById('username').value, 100);
     const password = document.getElementById('password').value;
+    
+    // Validate inputs
+    if (!username || !password) {
+        alert('Please enter both username/email and password.');
+        return;
+    }
+    
+    if (username.length < 3) {
+        alert('Username/email must be at least 3 characters long.');
+        return;
+    }
     
     // Get stored users
     const users = JSON.parse(localStorage.getItem('virtualCompanyUsers') || '[]');
@@ -57,10 +97,41 @@ loginForm.addEventListener('submit', (e) => {
 registerForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const email = document.getElementById('reg-email').value;
-    const username = document.getElementById('reg-username').value;
+    const email = validateInput(document.getElementById('reg-email').value, 100);
+    const username = validateInput(document.getElementById('reg-username').value, 20);
     const password = document.getElementById('reg-password').value;
-    const name = document.getElementById('reg-name').value;
+    const name = validateInput(document.getElementById('reg-name').value, 50);
+    
+    // Validate inputs
+    if (!email || !username || !password || !name) {
+        alert('Please fill in all fields.');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+    
+    if (username.length < 3 || username.length > 20) {
+        alert('Username must be between 3 and 20 characters.');
+        return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        alert('Username can only contain letters, numbers, and underscores.');
+        return;
+    }
+    
+    if (!isValidPassword(password)) {
+        alert('Password must be at least 8 characters long and contain both letters and numbers.');
+        return;
+    }
+    
+    if (name.length < 2 || name.length > 50) {
+        alert('Name must be between 2 and 50 characters.');
+        return;
+    }
     
     // Get stored users
     const users = JSON.parse(localStorage.getItem('virtualCompanyUsers') || '[]');
@@ -77,7 +148,7 @@ registerForm.addEventListener('submit', (e) => {
     users.push({
         email,
         username,
-        password,
+        password, // Note: In production, this should be hashed
         name
     });
     

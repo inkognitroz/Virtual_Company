@@ -1,12 +1,35 @@
 // Dashboard JavaScript
 
+// Utility function to validate and clean input (prevent XSS)
+function validateInput(input, maxLength = 5000) {
+    if (typeof input !== 'string') return '';
+    // Trim whitespace
+    const cleaned = input.trim();
+    // Limit length
+    return cleaned.substring(0, maxLength);
+}
+
+// Utility function to escape HTML for display
+function escapeHTML(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        "/": '&#x2F;',
+    };
+    return String(text).replace(/[&<>"'/]/g, (char) => map[char]);
+}
+
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
 if (!currentUser) {
     window.location.href = 'index.html';
 }
 
-// Display user info
+// Display user info (sanitized)
 document.getElementById('userName').textContent = currentUser.name || currentUser.username;
 
 // Initialize roles from localStorage
@@ -50,6 +73,102 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
     window.location.href = 'index.html';
 });
 
+// ========== DATA EXPORT/IMPORT ==========
+
+// Export data
+document.getElementById('exportDataBtn').addEventListener('click', () => {
+    try {
+        const exportData = {
+            roles: roles,
+            chatMessages: chatMessages,
+            exportDate: new Date().toISOString(),
+            version: '1.0.0'
+        };
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `virtual-company-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        alert('Data exported successfully!');
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export data. Please try again.');
+    }
+});
+
+// Import data
+document.getElementById('importDataBtn').addEventListener('click', () => {
+    document.getElementById('importDataFile').click();
+});
+
+document.getElementById('importDataFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const importData = JSON.parse(event.target.result);
+            
+            // Validate import data structure
+            if (!importData.roles || !Array.isArray(importData.roles)) {
+                throw new Error('Invalid data format: roles missing or invalid');
+            }
+            
+            if (!importData.chatMessages || !Array.isArray(importData.chatMessages)) {
+                throw new Error('Invalid data format: chatMessages missing or invalid');
+            }
+            
+            // Ask for confirmation
+            const confirmImport = confirm(
+                `This will import:\n` +
+                `- ${importData.roles.length} role(s)\n` +
+                `- ${importData.chatMessages.length} chat message(s)\n\n` +
+                `Your current data will be replaced. Continue?`
+            );
+            
+            if (!confirmImport) return;
+            
+            // Import data
+            roles = importData.roles;
+            chatMessages = importData.chatMessages;
+            
+            // Save to localStorage
+            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+            
+            // Refresh UI
+            renderRoles();
+            updateChatRoleSelector();
+            renderChatMessages();
+            
+            alert('Data imported successfully!');
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Failed to import data. Please ensure the file is a valid Virtual Company export.');
+        }
+        
+        // Reset file input
+        e.target.value = '';
+    };
+    
+    reader.onerror = () => {
+        alert('Failed to read file. Please try again.');
+        e.target.value = '';
+    };
+    
+    reader.readAsText(file);
+});
+
 // ========== ROLES MANAGEMENT ==========
 
 // Modal handling
@@ -75,12 +194,38 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
+    const roleName = validateInput(document.getElementById('roleName').value, 50);
+    const roleAvatar = document.getElementById('roleAvatar').value;
+    const roleDescription = validateInput(document.getElementById('roleDescription').value, 500);
+    const aiInstructions = validateInput(document.getElementById('aiInstructions').value, 2000);
+    
+    // Validate inputs
+    if (!roleName || roleName.length < 2) {
+        alert('Please enter a role name (at least 2 characters).');
+        return;
+    }
+    
+    if (roleName.length > 50) {
+        alert('Role name must be less than 50 characters.');
+        return;
+    }
+    
+    if (roleDescription.length > 500) {
+        alert('Role description must be less than 500 characters.');
+        return;
+    }
+    
+    if (aiInstructions.length > 2000) {
+        alert('AI instructions must be less than 2000 characters.');
+        return;
+    }
+    
     const role = {
         id: Date.now().toString(),
-        name: document.getElementById('roleName').value,
-        avatar: document.getElementById('roleAvatar').value,
-        description: document.getElementById('roleDescription').value,
-        aiInstructions: document.getElementById('aiInstructions').value
+        name: roleName,
+        avatar: roleAvatar,
+        description: roleDescription,
+        aiInstructions: aiInstructions
     };
     
     roles.push(role);
@@ -113,14 +258,14 @@ function renderRoles() {
             <div class="role-card-header">
                 <div class="role-avatar">${role.avatar}</div>
                 <div>
-                    <h3>${role.name}</h3>
+                    <h3>${escapeHTML(role.name)}</h3>
                 </div>
             </div>
-            <p>${role.description || 'No description provided'}</p>
+            <p>${escapeHTML(role.description || 'No description provided')}</p>
             ${role.aiInstructions ? `
                 <div class="ai-instructions">
                     <strong>AI Instructions:</strong><br>
-                    ${role.aiInstructions}
+                    ${escapeHTML(role.aiInstructions)}
                 </div>
             ` : ''}
             <div class="role-actions">
@@ -172,10 +317,10 @@ function renderChatMessages() {
             <div class="message ${messageClass}">
                 <div class="message-header">
                     <span class="message-avatar">${msg.avatar}</span>
-                    <span>${msg.senderName}</span>
-                    <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
+                    <span>${escapeHTML(msg.senderName)}</span>
+                    <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${escapeHTML(msg.time)}</span>
                 </div>
-                <div class="message-content">${msg.content}</div>
+                <div class="message-content">${escapeHTML(msg.content)}</div>
             </div>
         `;
     });
@@ -192,9 +337,15 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     
     const chatInput = document.getElementById('chatInput');
     const chatRole = document.getElementById('chatRole');
-    const content = chatInput.value.trim();
+    const content = validateInput(chatInput.value, 5000);
     
     if (!content) return;
+    
+    // Validate message length (already handled by validateInput, but double-check)
+    if (content.length > 5000) {
+        alert('Message is too long. Please keep it under 5000 characters.');
+        return;
+    }
     
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -211,6 +362,10 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
         };
     } else {
         const role = roles.find(r => r.id === chatRole.value);
+        if (!role) {
+            alert('Selected role not found. Please refresh the page.');
+            return;
+        }
         message = {
             sender: 'role',
             senderName: role.name,
