@@ -741,7 +741,7 @@ function renderMCPServers() {
                     <button class="btn btn-small btn-secondary" onclick="configureMCPServer('${server.id}')">
                         ⚙️ Configure
                     </button>
-                    ${server.type !== 'filesystem' && server.type !== 'database' && server.type !== 'web-search' && server.type !== 'github' && server.type !== 'calendar' ? `
+                    ${!['filesystem', 'database', 'web-search', 'github', 'calendar'].includes(server.type) ? `
                         <button class="btn btn-small btn-danger" onclick="deleteMCPServer('${server.id}')">Delete</button>
                     ` : ''}
                 </div>
@@ -820,7 +820,7 @@ function configureMCPServer(serverId) {
             configHTML += `
                 <div class="form-group">
                     <label>Allowed Paths (comma-separated)</label>
-                    <input type="text" id="allowedPaths" value="${server.config.allowedPaths.join(', ')}" placeholder="/documents, /projects">
+                    <input type="text" id="allowedPaths" value="${(server.config.allowedPaths || []).join(', ')}" placeholder="/documents, /projects">
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label">

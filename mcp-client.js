@@ -94,7 +94,7 @@ class MCPClient {
     // Add a new MCP server
     addServer(serverConfig) {
         const server = {
-            id: Date.now().toString(),
+            id: `mcp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             ...serverConfig,
             enabled: false,
             createdAt: new Date().toISOString()
@@ -238,8 +238,9 @@ class MCPClient {
 
     // Simulate tool execution (placeholder for real MCP communication)
     async simulateToolExecution(server, toolName, parameters) {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simulate API delay (configurable, default 200ms for better UX)
+        const delay = server.config.simulatedDelay || 200;
+        await new Promise(resolve => setTimeout(resolve, delay));
 
         const simulations = {
             'filesystem': {

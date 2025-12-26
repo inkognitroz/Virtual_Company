@@ -10,6 +10,7 @@
     --secondary-color: #6c757d;
     --success-color: #28a745;
     --danger-color: #dc3545;
+    --danger-hover-color: #c82333;
     --warning-color: #ffc107;
     --dark-bg: #1a1a2e;
     --dark-secondary: #16213e;
@@ -997,7 +998,7 @@ body {
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: var(--danger-hover-color);
 }
 
 .checkbox-label {
