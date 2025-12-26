@@ -42,7 +42,9 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 
 ## 🛠️ Setup Instructions
 
-### For GitHub Pages
+### Option 1: Frontend Only (GitHub Pages)
+
+Perfect for quick demos and testing without backend infrastructure.
 
 1. **Fork or Clone this repository**
    ```bash
@@ -58,8 +60,51 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 
 3. **Access Your Site**
    - Your site will be available at: `https://[your-username].github.io/Virtual_Company/`
+   - Data is stored in browser localStorage (local to your device)
 
-### Local Development
+### Option 2: Full Stack with Backend (Recommended for Production)
+
+For persistent data storage, secure authentication, and API key protection.
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/inkognitroz/Virtual_Company.git
+   cd Virtual_Company
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Start MongoDB** (optional, app works without it)
+   ```bash
+   # Using Docker
+   docker run -d -p 27017:27017 --name mongodb mongo:latest
+   
+   # Or install MongoDB locally
+   ```
+
+5. **Run the Server**
+   ```bash
+   npm start
+   # Or for development with auto-restart:
+   npm run dev
+   ```
+
+6. **Access the Application**
+   - Open `http://localhost:3000` in your browser
+   - Data is stored in MongoDB database
+
+📚 **Detailed backend setup guide**: See [BACKEND_SETUP.md](BACKEND_SETUP.md)
+
+### Local Development (Frontend Only)
 
 1. **Clone the repository**
    ```bash
@@ -110,25 +155,114 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
    - Use the prompt templates as guidance
    - Leverage role-specific AI instructions for contextual responses
 
+## 🔌 Backend API (Optional)
+
+The Virtual Company provides a RESTful API for backend integration. This is optional but recommended for production deployments.
+
+### API Features
+- **Secure Authentication**: JWT-based with bcrypt password hashing
+- **User Management**: Registration, login, profile updates
+- **Role Management**: CRUD operations for virtual company roles
+- **Message History**: Persistent chat message storage
+- **AI Proxy**: Server-side API calls to hide API keys from frontend
+- **Rate Limiting**: Protection against abuse (100 req/15min)
+- **CORS Support**: Configurable cross-origin access
+- **Input Validation**: All inputs validated and sanitized
+
+### Quick API Example
+
+```javascript
+// Register a new user
+const response = await fetch('http://localhost:3000/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        email: 'user@example.com',
+        username: 'username',
+        password: 'secure-password',
+        name: 'John Doe'
+    })
+});
+
+const { token, user } = await response.json();
+// Use token for authenticated requests
+```
+
+### API Endpoints
+
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login and get JWT token
+- `GET /api/users/me` - Get current user profile
+- `GET /api/roles` - Get all roles
+- `POST /api/roles` - Create new role
+- `PUT /api/roles/:id` - Update role
+- `DELETE /api/roles/:id` - Delete role
+- `GET /api/messages` - Get chat messages
+- `POST /api/messages` - Create new message
+- `POST /api/ai/chat` - Proxy AI requests (hides API keys)
+- `GET /api/health` - Health check endpoint
+
+📚 **Complete API Documentation**: See [BACKEND_SETUP.md](BACKEND_SETUP.md)
+
 ## 🔧 Technical Details
 
-### Technologies Used
-- Pure HTML5, CSS3, and JavaScript (no frameworks required)
+### Architecture
+
+The Virtual Company supports two deployment modes:
+
+#### 1. **Frontend-Only Mode** (Default)
+- Pure HTML5, CSS3, and JavaScript
 - LocalStorage for data persistence
+- No server required - perfect for GitHub Pages
+- AI API keys are stored in browser (less secure)
+
+#### 2. **Full-Stack Mode** (Recommended for Production)
+- **Backend**: Node.js + Express server
+- **Database**: MongoDB for persistent storage
+- **Authentication**: JWT tokens with bcrypt password hashing
+- **Security**: API keys stored server-side, rate limiting, CORS, Helmet
+- **API**: RESTful endpoints for all resources
+
+### Technologies Used
+
+**Frontend:**
+- Pure HTML5, CSS3, and JavaScript (no frameworks required)
+- LocalStorage for client-side data persistence
 - Responsive CSS Grid and Flexbox layouts
 - Modern ES6+ JavaScript features
+- Web Speech API for voice features
+
+**Backend (Optional):**
+- Node.js v16+
+- Express.js web framework
+- MongoDB database with Mongoose ODM
+- JWT for authentication
+- bcrypt for password hashing
+- express-validator for input validation
+- Helmet for security headers
+- Rate limiting for API protection
 
 ### Data Storage
+
+**Frontend-Only Mode:**
 All data is stored locally in your browser using LocalStorage:
 - User accounts
 - Created roles
 - Chat messages
 - Session information
 
+**Full-Stack Mode:**
+All data is stored in MongoDB database:
+- User accounts (with hashed passwords)
+- Roles (linked to user accounts)
+- Chat messages (with full history)
+- Secure session management via JWT
+
 **Important Notes**:
-- Data is stored locally in your browser. Clearing browser data will reset the application.
-- This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
-- No data is sent to external servers; everything stays in your browser.
+- Frontend-only: Data is stored locally in your browser. Clearing browser data will reset the application.
+- Full-stack: Data persists in the database and is accessible from any device after login.
+- Frontend-only: No data is sent to external servers; everything stays in your browser.
+- Full-stack: Secure server-side data storage with proper authentication and encryption.
 
 ## 🎯 Use Cases
 
@@ -148,12 +282,18 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🌟 Future Enhancements
 
-- Real-time AI model integration
-- Persistent cloud storage option
-- Advanced role permissions
+- ✅ Backend API with persistent database storage
+- ✅ Secure JWT-based authentication
+- ✅ Server-side API key protection
+- Real-time AI model integration with streaming responses
+- WebSocket support for real-time collaboration
+- Advanced role permissions and access control
 - Team analytics and insights
 - Export/import functionality for roles and chats
-- Real-time collaboration features
+- Multi-user real-time chat with presence indicators
+- File sharing and document collaboration
+- Calendar integration for scheduling
+- Task management and project tracking
 
 ## 💡 Tips
 

@@ -14,3 +14,15 @@ Thumbs.db
 # Temporary files
 *.tmp
 *~
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment
+.env
+
+# Database
+*.db
+*.sqlite
