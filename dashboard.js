@@ -31,6 +31,8 @@ function getFromLocalStorage(key, defaultValue = null) {
 }
 
 // Sanitize HTML to prevent XSS
+// Note: This basic sanitization escapes HTML entities. For production use,
+// consider using a robust library like DOMPurify for comprehensive XSS protection.
 function sanitizeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -120,7 +122,7 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     
     // Get and sanitize inputs
     const roleName = sanitizeInput(document.getElementById('roleName').value, 100);
-    const roleAvatar = document.getElementById('roleAvatar').value;
+    const roleAvatar = sanitizeHTML(document.getElementById('roleAvatar').value);
     const roleDescription = sanitizeInput(document.getElementById('roleDescription').value, 500);
     const aiInstructions = sanitizeInput(document.getElementById('aiInstructions').value, 2000);
     
@@ -169,13 +171,14 @@ function renderRoles() {
     
     rolesGrid.innerHTML = roles.map(role => {
         const safeName = sanitizeHTML(role.name);
+        const safeAvatar = sanitizeHTML(role.avatar);
         const safeDescription = sanitizeHTML(role.description || 'No description provided');
         const safeInstructions = sanitizeHTML(role.aiInstructions || '');
         
         return `
         <div class="role-card">
             <div class="role-card-header">
-                <div class="role-avatar">${role.avatar}</div>
+                <div class="role-avatar">${safeAvatar}</div>
                 <div>
                     <h3>${safeName}</h3>
                 </div>
@@ -235,13 +238,14 @@ function renderChatMessages() {
     chatMessages.forEach(msg => {
         const messageClass = msg.sender === 'user' ? 'user' : 'role';
         const safeSenderName = sanitizeHTML(msg.senderName);
+        const safeAvatar = sanitizeHTML(msg.avatar);
         const safeContent = sanitizeHTML(msg.content);
         const safeTime = sanitizeHTML(msg.time);
         
         messagesHTML += `
             <div class="message ${messageClass}">
                 <div class="message-header">
-                    <span class="message-avatar">${msg.avatar}</span>
+                    <span class="message-avatar">${safeAvatar}</span>
                     <span>${safeSenderName}</span>
                     <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${safeTime}</span>
                 </div>
