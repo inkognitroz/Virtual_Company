@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: virtual-company-db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: virtual-company
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - virtual-company-network
+
+  # Backend API Server
+  backend:
+    build: ./backend
+    container_name: virtual-company-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/virtual-company?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-key-in-production}
+      JWT_EXPIRE: 7d
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8000}
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+    depends_on:
+      - mongodb
+    networks:
+      - virtual-company-network
+
+  # Frontend Web Server (nginx)
+  frontend:
+    image: nginx:alpine
+    container_name: virtual-company-frontend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - virtual-company-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  virtual-company-network:
+    driver: bridge
