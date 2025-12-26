@@ -406,6 +406,14 @@ body {
     font-style: italic;
 }
 
+.system-message.error {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: var(--border-radius);
+    margin: 10px;
+    padding: 15px;
+}
+
 .chat-input-container {
     padding: 20px;
     background: var(--dark-tertiary);
