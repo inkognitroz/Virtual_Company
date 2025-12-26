@@ -31,26 +31,50 @@ app.use(express.static('./', {
 
 // Database connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/virtual-company';
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✓ Connected to MongoDB'))
+
+// Track database status
+let isDatabaseConnected = false;
+
+mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 5000
+})
+    .then(() => {
+        console.log('✓ Connected to MongoDB');
+        isDatabaseConnected = true;
+    })
     .catch(err => {
-        console.error('MongoDB connection error:', err);
-        console.log('⚠ Running without database - using in-memory storage');
+        console.error('MongoDB connection error:', err.message);
+        console.log('⚠ Running without database - API endpoints will return errors');
+        console.log('⚠ Use the frontend in localStorage mode instead');
+        isDatabaseConnected = false;
     });
 
+// Make database status available to routes
+app.use((req, res, next) => {
+    req.isDatabaseConnected = isDatabaseConnected;
+    next();
+});
+
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/roles', require('./routes/roles'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/ai', require('./routes/ai'));
+const checkDatabase = require('./middleware/checkDatabase');
+
+// Apply database check to all API routes except health check
+app.use('/api/auth', checkDatabase, require('./routes/auth'));
+app.use('/api/users', checkDatabase, require('./routes/users'));
+app.use('/api/roles', checkDatabase, require('./routes/roles'));
+app.use('/api/messages', checkDatabase, require('./routes/messages'));
+app.use('/api/ai', checkDatabase, require('./routes/ai'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        message: mongoose.connection.readyState === 1 
+            ? 'Backend fully operational' 
+            : 'Backend running without database - use frontend localStorage mode'
     });
 });
 
