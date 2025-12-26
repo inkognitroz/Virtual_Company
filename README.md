@@ -2,14 +2,25 @@
 
 Virtual Company is an AI-based Virtual Company that can be set up in minutes. The platform features the possibility to define all roles necessary to reach company goals and mission. All functions are designed to be fully automated and AI-based.
 
+**NEW**: Now with optional backend support for secure data persistence and multi-device access! 🚀
+
 ## 🚀 Live Demo
 
 Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https://inkognitroz.github.io/Virtual_Company/)
 
+## 📚 Documentation
+
+- **[Quick Start Guide](QUICKSTART.md)** - Get running in 5 minutes
+- **[Backend Setup](BACKEND_SETUP.md)** - Set up the Node.js/Express backend
+- **[API Documentation](API_DOCUMENTATION.md)** - Complete REST API reference
+- **[Migration Guide](MIGRATION_GUIDE.md)** - Switch from client-only to backend mode
+- **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production (Heroku, AWS, Docker, etc.)
+
 ## ✨ Features
 
-### 🔐 Easy Authentication
-- Simple login/registration system
+### 🔐 Secure Authentication
+- **Client Mode**: Simple browser-based login/registration
+- **Backend Mode**: JWT authentication with password hashing
 - Email or username-based authentication
 - Secure session management
 
@@ -17,6 +28,7 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Create custom roles for your virtual company
 - Assign avatars and descriptions to each role
 - Define AI instructions for each role to guide LLM behavior
+- **Backend Mode**: Persistent roles across devices
 
 ### 🤖 AI Integration
 - Built-in support for AI model integration
@@ -29,12 +41,14 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Send messages as yourself or any created role
 - Persistent chat history
 - Role-specific AI-powered responses
+- **Backend Mode**: Messages stored in database
 
 ### 📊 Data Management
 - **Export/Import**: Backup and restore your entire workspace
 - Export all data or specific components (roles, chats)
 - Import data to merge or migrate between browsers
 - One-click data clearing with confirmation
+- **Backend Mode**: Automatic persistence to MongoDB
 
 ### 📹 Video Call Integration
 - **Google Meet**: Create or join meetings directly
@@ -45,6 +59,14 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Clean, professional dark theme interface
 - Responsive design for desktop and mobile
 - Intuitive navigation and user experience
+
+### 🔒 Backend Features (Optional)
+- **Secure Authentication**: Bcrypt password hashing, JWT tokens
+- **Data Persistence**: MongoDB database storage
+- **Multi-Device**: Access from any browser/device
+- **API-First**: RESTful API for all operations
+- **Production Ready**: Rate limiting, input validation, security headers
+- **Docker Support**: Easy deployment with docker-compose
 
 ## 🛠️ Setup Instructions
 
