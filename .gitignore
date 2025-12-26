@@ -45,3 +45,7 @@ htmlcov/
 backend/.env
 backend/virtual_company.db
 backend/virtual_company.db-*
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
