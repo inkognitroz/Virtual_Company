@@ -362,6 +362,26 @@ body {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat */
+.chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: var(--dark-tertiary);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #3a7bc8;
 }
 
 .message {
@@ -369,6 +389,25 @@ body {
     padding: 12px;
     border-radius: var(--border-radius);
     max-width: 80%;
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease;
+}
+
+/* Message fade-in animation */
+.message-fade-in {
+    animation: messageSlideIn 0.3s ease;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .message.user {
@@ -476,21 +515,43 @@ body {
     color: var(--light-text);
     resize: none;
     font-family: inherit;
+    min-height: 60px;
+    max-height: 150px;
+    transition: border-color 0.2s ease;
+}
+
+#chatInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#chatInput:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .chat-controls button {
     flex: 1;
+    transition: all 0.2s ease;
+}
+
+.chat-controls button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Typing Indicator */
 .typing {
-    opacity: 0.8;
+    opacity: 1;
+    animation: messageSlideIn 0.3s ease;
 }
 
 .typing-dots {
     display: flex;
     gap: 4px;
     padding: 8px;
+    align-items: center;
 }
 
 .typing-dots span {
@@ -498,7 +559,7 @@ body {
     height: 8px;
     background: var(--primary-color);
     border-radius: 50%;
-    animation: typing 1.4s infinite;
+    animation: typingBounce 1.4s infinite ease-in-out;
 }
 
 .typing-dots span:nth-child(2) {
@@ -509,12 +570,14 @@ body {
     animation-delay: 0.4s;
 }
 
-@keyframes typing {
+@keyframes typingBounce {
     0%, 60%, 100% {
         transform: translateY(0);
+        opacity: 0.7;
     }
     30% {
         transform: translateY(-10px);
+        opacity: 1;
     }
 }
 
