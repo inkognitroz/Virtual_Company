@@ -293,6 +293,16 @@ async function callAIAPI(userMessage, role) {
     const provider = aiConfig.provider;
     const apiKey = aiConfig.apiKey;
     
+    // Get MCP context if available
+    let mcpContext = '';
+    if (mcpClient) {
+        const context = await mcpClient.getContextForAI(role.aiInstructions, userMessage);
+        mcpContext = context.contextString;
+    }
+    
+    // Combine role instructions with MCP context
+    const systemPrompt = role.aiInstructions + mcpContext;
+    
     try {
         if (provider === 'openai') {
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -304,7 +314,7 @@ async function callAIAPI(userMessage, role) {
                 body: JSON.stringify({
                     model: 'gpt-3.5-turbo',
                     messages: [
-                        { role: 'system', content: role.aiInstructions },
+                        { role: 'system', content: systemPrompt },
                         { role: 'user', content: userMessage }
                     ],
                     max_tokens: 500
@@ -328,7 +338,7 @@ async function callAIAPI(userMessage, role) {
                     model: 'claude-3-sonnet-20240229',
                     max_tokens: 500,
                     messages: [
-                        { role: 'user', content: `${role.aiInstructions}\n\n${userMessage}` }
+                        { role: 'user', content: `${systemPrompt}\n\n${userMessage}` }
                     ]
                 })
             });
@@ -347,7 +357,7 @@ async function callAIAPI(userMessage, role) {
                 body: JSON.stringify({
                     prompt: userMessage,
                     role: role.name,
-                    instructions: role.aiInstructions
+                    instructions: systemPrompt
                 })
             });
             
@@ -466,12 +476,16 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 
 // ========== INITIALIZATION ==========
 
+// Initialize MCP Client
+let mcpClient = null;
+
 // Initialize on page load
 renderRoles();
 updateChatRoleSelector();
 renderChatMessages();
 initializeVoiceRecognition();
 setupAIConfigHandlers();
+initializeMCP();
 
 // Add some default roles if none exist
 if (roles.length === 0) {
@@ -654,3 +668,396 @@ function setupAIConfigHandlers() {
         });
     }
 }
+
+// ========== MCP SERVER MANAGEMENT ==========
+
+// Initialize MCP
+function initializeMCP() {
+    if (typeof MCPClient === 'undefined') {
+        console.warn('MCP Client not loaded');
+        return;
+    }
+    
+    mcpClient = new MCPClient();
+    renderMCPServers();
+    updateMCPToolsAndResources();
+    setupMCPHandlers();
+}
+
+// Render MCP servers
+function renderMCPServers() {
+    if (!mcpClient) return;
+    
+    const mcpServersGrid = document.getElementById('mcpServersGrid');
+    const servers = mcpClient.getServers();
+    
+    if (servers.length === 0) {
+        mcpServersGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-text);">
+                <p style="font-size: 1.2em; margin-bottom: 20px;">No MCP servers configured yet.</p>
+                <p>Click "Add Custom Server" to create your own MCP server integration.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    mcpServersGrid.innerHTML = servers.map(server => {
+        const isConnected = mcpClient.isConnected(server.id);
+        const statusClass = server.enabled ? (isConnected ? 'connected' : 'connecting') : 'disabled';
+        const statusText = server.enabled ? (isConnected ? 'Connected' : 'Connecting...') : 'Disabled';
+        
+        return `
+            <div class="mcp-server-card ${statusClass}">
+                <div class="mcp-server-header">
+                    <h3>${server.name}</h3>
+                    <span class="mcp-status ${statusClass}">${statusText}</span>
+                </div>
+                <p class="mcp-server-type">Type: ${server.type}</p>
+                <p class="mcp-server-description">${server.description || 'No description provided'}</p>
+                
+                <div class="mcp-server-details">
+                    <div class="mcp-detail-item">
+                        <strong>Tools:</strong> ${server.tools.length}
+                    </div>
+                    <div class="mcp-detail-item">
+                        <strong>Resources:</strong> ${server.resources.length}
+                    </div>
+                </div>
+                
+                <div class="mcp-server-tools-list">
+                    <strong>Available Tools:</strong>
+                    <div class="tool-tags">
+                        ${server.tools.slice(0, 3).map(tool => `<span class="tool-tag">${tool}</span>`).join('')}
+                        ${server.tools.length > 3 ? `<span class="tool-tag">+${server.tools.length - 3} more</span>` : ''}
+                    </div>
+                </div>
+                
+                <div class="mcp-server-actions">
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${server.enabled ? 'checked' : ''} 
+                               onchange="toggleMCPServer('${server.id}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="btn btn-small btn-secondary" onclick="configureMCPServer('${server.id}')">
+                        ⚙️ Configure
+                    </button>
+                    ${server.type !== 'filesystem' && server.type !== 'database' && server.type !== 'web-search' && server.type !== 'github' && server.type !== 'calendar' ? `
+                        <button class="btn btn-small btn-danger" onclick="deleteMCPServer('${server.id}')">Delete</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Update MCP tools and resources display
+function updateMCPToolsAndResources() {
+    if (!mcpClient) return;
+    
+    const tools = mcpClient.getAvailableTools();
+    const resources = mcpClient.getAvailableResources();
+    
+    const toolsList = document.getElementById('mcpToolsList');
+    const resourcesList = document.getElementById('mcpResourcesList');
+    
+    if (tools.length === 0) {
+        toolsList.innerHTML = '<p class="empty-state">No tools available. Enable MCP servers to add tools.</p>';
+    } else {
+        toolsList.innerHTML = tools.map(tool => `
+            <div class="mcp-item">
+                <span class="mcp-item-name">${tool.name}</span>
+                <span class="mcp-item-server">${tool.server}</span>
+            </div>
+        `).join('');
+    }
+    
+    if (resources.length === 0) {
+        resourcesList.innerHTML = '<p class="empty-state">No resources available. Enable MCP servers to add resources.</p>';
+    } else {
+        resourcesList.innerHTML = resources.map(resource => `
+            <div class="mcp-item">
+                <span class="mcp-item-name">${resource.name}</span>
+                <span class="mcp-item-server">${resource.server}</span>
+            </div>
+        `).join('');
+    }
+}
+
+// Toggle MCP server
+function toggleMCPServer(serverId, enabled) {
+    if (!mcpClient) return;
+    
+    mcpClient.toggleServer(serverId, enabled);
+    renderMCPServers();
+    updateMCPToolsAndResources();
+    
+    const server = mcpClient.getServer(serverId);
+    if (server) {
+        const status = enabled ? 'enabled' : 'disabled';
+        console.log(`MCP Server "${server.name}" ${status}`);
+    }
+}
+
+// Configure MCP server
+function configureMCPServer(serverId) {
+    if (!mcpClient) return;
+    
+    const server = mcpClient.getServer(serverId);
+    if (!server) return;
+    
+    const modal = document.getElementById('configureMCPServerModal');
+    const content = document.getElementById('mcpServerConfigContent');
+    
+    // Build configuration form based on server type
+    let configHTML = `
+        <h3>${server.name} Configuration</h3>
+        <form id="mcpServerConfigForm" onsubmit="saveMCPServerConfig(event, '${serverId}')">
+    `;
+    
+    // Add configuration fields based on server type
+    switch (server.type) {
+        case 'filesystem':
+            configHTML += `
+                <div class="form-group">
+                    <label>Allowed Paths (comma-separated)</label>
+                    <input type="text" id="allowedPaths" value="${server.config.allowedPaths.join(', ')}" placeholder="/documents, /projects">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="readOnly" ${server.config.readOnly ? 'checked' : ''}>
+                        Read-only mode
+                    </label>
+                </div>
+            `;
+            break;
+        case 'database':
+            configHTML += `
+                <div class="form-group">
+                    <label>Database Type</label>
+                    <select id="dbType">
+                        <option value="sqlite" ${server.config.type === 'sqlite' ? 'selected' : ''}>SQLite</option>
+                        <option value="postgres" ${server.config.type === 'postgres' ? 'selected' : ''}>PostgreSQL</option>
+                        <option value="mysql" ${server.config.type === 'mysql' ? 'selected' : ''}>MySQL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Connection String</label>
+                    <input type="text" id="connectionString" value="${server.config.connectionString}" placeholder="Database connection string">
+                </div>
+            `;
+            break;
+        case 'web-search':
+            configHTML += `
+                <div class="form-group">
+                    <label>Search Provider</label>
+                    <select id="provider">
+                        <option value="google" ${server.config.provider === 'google' ? 'selected' : ''}>Google</option>
+                        <option value="bing" ${server.config.provider === 'bing' ? 'selected' : ''}>Bing</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="apiKey" value="${server.config.apiKey}" placeholder="API Key">
+                </div>
+            `;
+            break;
+        case 'github':
+            configHTML += `
+                <div class="form-group">
+                    <label>GitHub API Token</label>
+                    <input type="password" id="apiToken" value="${server.config.apiToken}" placeholder="GitHub Personal Access Token">
+                </div>
+                <div class="form-group">
+                    <label>Default Repository</label>
+                    <input type="text" id="defaultRepo" value="${server.config.defaultRepo}" placeholder="owner/repo">
+                </div>
+            `;
+            break;
+        case 'calendar':
+            configHTML += `
+                <div class="form-group">
+                    <label>Calendar Provider</label>
+                    <select id="provider">
+                        <option value="google" ${server.config.provider === 'google' ? 'selected' : ''}>Google Calendar</option>
+                        <option value="outlook" ${server.config.provider === 'outlook' ? 'selected' : ''}>Outlook</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>API Key</label>
+                    <input type="password" id="apiKey" value="${server.config.apiKey}" placeholder="API Key">
+                </div>
+            `;
+            break;
+        default:
+            configHTML += `
+                <div class="form-group">
+                    <label>Configuration (JSON)</label>
+                    <textarea id="customConfig" rows="6">${JSON.stringify(server.config, null, 2)}</textarea>
+                </div>
+            `;
+    }
+    
+    configHTML += `
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Configuration</button>
+                <button type="button" class="btn btn-secondary" onclick="closeConfigureMCPModal()">Cancel</button>
+            </div>
+        </form>
+    `;
+    
+    content.innerHTML = configHTML;
+    modal.style.display = 'block';
+}
+
+// Save MCP server configuration
+function saveMCPServerConfig(event, serverId) {
+    event.preventDefault();
+    if (!mcpClient) return;
+    
+    const server = mcpClient.getServer(serverId);
+    if (!server) return;
+    
+    const updates = { config: { ...server.config } };
+    
+    // Get configuration values based on server type
+    switch (server.type) {
+        case 'filesystem':
+            const allowedPaths = document.getElementById('allowedPaths').value.split(',').map(p => p.trim());
+            const readOnly = document.getElementById('readOnly').checked;
+            updates.config = { allowedPaths, readOnly };
+            break;
+        case 'database':
+            updates.config = {
+                type: document.getElementById('dbType').value,
+                connectionString: document.getElementById('connectionString').value
+            };
+            break;
+        case 'web-search':
+            updates.config = {
+                provider: document.getElementById('provider').value,
+                apiKey: document.getElementById('apiKey').value
+            };
+            break;
+        case 'github':
+            updates.config = {
+                apiToken: document.getElementById('apiToken').value,
+                defaultRepo: document.getElementById('defaultRepo').value
+            };
+            break;
+        case 'calendar':
+            updates.config = {
+                provider: document.getElementById('provider').value,
+                apiKey: document.getElementById('apiKey').value
+            };
+            break;
+        default:
+            try {
+                updates.config = JSON.parse(document.getElementById('customConfig').value);
+            } catch (e) {
+                alert('Invalid JSON configuration');
+                return;
+            }
+    }
+    
+    mcpClient.updateServer(serverId, updates);
+    closeConfigureMCPModal();
+    renderMCPServers();
+    alert('Configuration saved successfully!');
+}
+
+// Delete MCP server
+function deleteMCPServer(serverId) {
+    if (!mcpClient) return;
+    
+    const server = mcpClient.getServer(serverId);
+    if (!server) return;
+    
+    if (confirm(`Are you sure you want to delete the "${server.name}" MCP server?`)) {
+        mcpClient.deleteServer(serverId);
+        renderMCPServers();
+        updateMCPToolsAndResources();
+    }
+}
+
+// Close configure modal
+function closeConfigureMCPModal() {
+    document.getElementById('configureMCPServerModal').style.display = 'none';
+}
+
+// Setup MCP handlers
+function setupMCPHandlers() {
+    // Add custom server button
+    const addMCPServerBtn = document.getElementById('addMCPServerBtn');
+    if (addMCPServerBtn) {
+        addMCPServerBtn.addEventListener('click', () => {
+            document.getElementById('addMCPServerModal').style.display = 'block';
+        });
+    }
+    
+    // Close MCP modal
+    const closeMCPModal = document.getElementById('closeMCPModal');
+    if (closeMCPModal) {
+        closeMCPModal.addEventListener('click', () => {
+            document.getElementById('addMCPServerModal').style.display = 'none';
+        });
+    }
+    
+    // Close configure modal
+    const closeConfigureMCPModal = document.getElementById('closeConfigureMCPModal');
+    if (closeConfigureMCPModal) {
+        closeConfigureMCPModal.addEventListener('click', () => {
+            document.getElementById('configureMCPServerModal').style.display = 'none';
+        });
+    }
+    
+    // Add MCP server form
+    const addMCPServerForm = document.getElementById('addMCPServerForm');
+    if (addMCPServerForm) {
+        addMCPServerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('mcpServerName').value;
+            const type = document.getElementById('mcpServerType').value;
+            const description = document.getElementById('mcpServerDescription').value;
+            const tools = document.getElementById('mcpServerTools').value.split(',').map(t => t.trim()).filter(t => t);
+            const resources = document.getElementById('mcpServerResources').value.split(',').map(r => r.trim()).filter(r => r);
+            
+            const serverConfig = {
+                name,
+                type,
+                description,
+                tools,
+                resources,
+                config: {}
+            };
+            
+            mcpClient.addServer(serverConfig);
+            renderMCPServers();
+            updateMCPToolsAndResources();
+            
+            // Reset form and close modal
+            addMCPServerForm.reset();
+            document.getElementById('addMCPServerModal').style.display = 'none';
+        });
+    }
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+        const addModal = document.getElementById('addMCPServerModal');
+        const configModal = document.getElementById('configureMCPServerModal');
+        
+        if (e.target === addModal) {
+            addModal.style.display = 'none';
+        }
+        if (e.target === configModal) {
+            configModal.style.display = 'none';
+        }
+    });
+}
+
+// Make functions globally available
+window.toggleMCPServer = toggleMCPServer;
+window.configureMCPServer = configureMCPServer;
+window.deleteMCPServer = deleteMCPServer;
+window.saveMCPServerConfig = saveMCPServerConfig;
+window.closeConfigureMCPModal = closeConfigureMCPModal;

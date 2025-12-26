@@ -35,6 +35,10 @@
                     <span class="icon">🤖</span>
                     <span>AI Integration</span>
                 </a>
+                <a href="#" class="nav-item" data-section="mcp">
+                    <span class="icon">🔌</span>
+                    <span>MCP Servers</span>
+                </a>
             </nav>
             
             <button id="logoutBtn" class="btn btn-secondary logout-btn">Logout</button>
@@ -241,9 +245,96 @@
                     </div>
                 </div>
             </section>
+
+            <!-- MCP Servers Section -->
+            <section id="mcp-section" class="content-section">
+                <div class="section-header">
+                    <h1>MCP Server Management</h1>
+                    <button class="btn btn-primary" id="addMCPServerBtn">+ Add Custom Server</button>
+                </div>
+                
+                <div class="info-box">
+                    <h3>🔌 What are MCP Servers?</h3>
+                    <p>Model Context Protocol (MCP) servers provide your AI roles with access to external tools and resources. Enable servers below to give your AI team powerful capabilities like file access, database queries, web search, and more.</p>
+                </div>
+
+                <div class="mcp-servers-container">
+                    <h3>Available MCP Servers</h3>
+                    <div id="mcpServersGrid" class="mcp-servers-grid">
+                        <!-- MCP servers will be dynamically added here -->
+                    </div>
+                </div>
+
+                <div class="mcp-active-tools">
+                    <h3>Active Tools & Resources</h3>
+                    <div class="tools-resources-container">
+                        <div class="tools-section">
+                            <h4>🛠️ Available Tools</h4>
+                            <div id="mcpToolsList" class="mcp-list">
+                                <p class="empty-state">No tools available. Enable MCP servers to add tools.</p>
+                            </div>
+                        </div>
+                        <div class="resources-section">
+                            <h4>📚 Available Resources</h4>
+                            <div id="mcpResourcesList" class="mcp-list">
+                                <p class="empty-state">No resources available. Enable MCP servers to add resources.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add MCP Server Modal -->
+                <div id="addMCPServerModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" id="closeMCPModal">&times;</span>
+                        <h2>Add Custom MCP Server</h2>
+                        <form id="addMCPServerForm">
+                            <div class="form-group">
+                                <label for="mcpServerName">Server Name</label>
+                                <input type="text" id="mcpServerName" required placeholder="e.g., My Custom Server">
+                            </div>
+                            <div class="form-group">
+                                <label for="mcpServerType">Server Type</label>
+                                <select id="mcpServerType" required>
+                                    <option value="custom">Custom</option>
+                                    <option value="filesystem">Filesystem</option>
+                                    <option value="database">Database</option>
+                                    <option value="web-search">Web Search</option>
+                                    <option value="api">API</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="mcpServerDescription">Description</label>
+                                <textarea id="mcpServerDescription" rows="3" placeholder="What does this server do?"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="mcpServerTools">Available Tools (comma-separated)</label>
+                                <input type="text" id="mcpServerTools" placeholder="e.g., search, analyze, process">
+                            </div>
+                            <div class="form-group">
+                                <label for="mcpServerResources">Available Resources (comma-separated)</label>
+                                <input type="text" id="mcpServerResources" placeholder="e.g., data, documents, results">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Server</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Configure MCP Server Modal -->
+                <div id="configureMCPServerModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" id="closeConfigureMCPModal">&times;</span>
+                        <h2>Configure MCP Server</h2>
+                        <div id="mcpServerConfigContent">
+                            <!-- Configuration form will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
     
+    <script src="mcp-client.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>
