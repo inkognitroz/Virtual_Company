@@ -29,11 +29,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
-const limiter = rateLimit({
+const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100 // limit each IP to 100 requests per windowMs
 });
-app.use('/api/', limiter);
+
+const staticLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 60 // limit each IP to 60 requests per minute for static files
+});
+
+app.use('/api/', apiLimiter);
 
 // Serve static files - frontend HTML/CSS/JS
 // Explicitly serve only frontend files to avoid exposing backend code
@@ -54,12 +60,12 @@ const serveStatic = express.static('./', {
 
 app.use(serveStatic);
 
-// Explicit routes for HTML pages
-app.get('/', (req, res) => {
+// Explicit routes for HTML pages with rate limiting
+app.get('/', staticLimiter, (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/dashboard.html', (req, res) => {
+app.get('/dashboard.html', staticLimiter, (req, res) => {
     res.sendFile(__dirname + '/dashboard.html');
 });
 
