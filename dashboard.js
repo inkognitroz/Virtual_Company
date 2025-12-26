@@ -368,22 +368,22 @@ async function callAIAPI(userMessage, role) {
 function generateSimulatedResponse(userMessage, role) {
     const responses = {
         'Project Manager': [
-            `Great point! Let's break this down into actionable tasks. I'll create a timeline and assign responsibilities.`,
-            `I agree. We should prioritize this and allocate resources accordingly. Let me schedule a follow-up meeting.`,
-            `That's an important consideration. I'll add it to our project roadmap and track the progress.`,
-            `Excellent suggestion! This aligns well with our current sprint goals. Let's implement it in the next iteration.`
+            'Great point! Let\'s break this down into actionable tasks. I\'ll create a timeline and assign responsibilities.',
+            'I agree. We should prioritize this and allocate resources accordingly. Let me schedule a follow-up meeting.',
+            'That\'s an important consideration. I\'ll add it to our project roadmap and track the progress.',
+            'Excellent suggestion! This aligns well with our current sprint goals. Let\'s implement it in the next iteration.'
         ],
         'Lead Developer': [
-            `From a technical perspective, we should consider scalability and maintainability here.`,
-            `I recommend we implement this using best practices and add proper test coverage.`,
-            `Good idea. We'll need to refactor some code, but it will improve our architecture significantly.`,
-            `Let's review the technical requirements and ensure we have the right dependencies in place.`
+            'From a technical perspective, we should consider scalability and maintainability here.',
+            'I recommend we implement this using best practices and add proper test coverage.',
+            'Good idea. We\'ll need to refactor some code, but it will improve our architecture significantly.',
+            'Let\'s review the technical requirements and ensure we have the right dependencies in place.'
         ],
         'AI Assistant': [
-            `I can help with that! Based on the context, here's what I suggest...`,
-            `Let me analyze this for you. The key considerations are...`,
-            `That's an interesting question. Here's my recommendation based on best practices...`,
-            `I've processed your request. Here are the main points to consider...`
+            'I can help with that! Based on the context, here\'s what I suggest...',
+            'Let me analyze this for you. The key considerations are...',
+            'That\'s an interesting question. Here\'s my recommendation based on best practices...',
+            'I\'ve processed your request. Here are the main points to consider...'
         ]
     };
     
