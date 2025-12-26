@@ -1,8 +1,6 @@
 // API Configuration
 const API_CONFIG = {
     // Backend URL configuration
-    // For development: uses localhost
-    // For production: set BACKEND_URL environment variable or update this value
     BASE_URL: (() => {
         // Check if running on localhost/127.0.0.1
         const isLocal = window.location.hostname === 'localhost' || 
@@ -12,10 +10,16 @@ const API_CONFIG = {
             return 'http://localhost:3000';
         }
         
-        // For GitHub Pages or other static hosting, you can set the backend URL here
-        // Example: return 'https://api.yourbackend.com';
-        // Or use an environment variable if your build process supports it
-        return window.BACKEND_URL || 'http://localhost:3000';
+        // For production, BACKEND_URL must be set
+        // You can set this via build process or script tag before loading this file
+        // Example: <script>window.BACKEND_URL = 'https://api.yourbackend.com';</script>
+        if (!window.BACKEND_URL) {
+            console.error('ERROR: BACKEND_URL is not configured for production deployment');
+            console.error('Please set window.BACKEND_URL before loading api-client.js');
+            console.error('Example: <script>window.BACKEND_URL = "https://api.yourbackend.com";</script>');
+        }
+        
+        return window.BACKEND_URL || '';
     })(),
     
     ENDPOINTS: {

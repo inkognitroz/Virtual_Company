@@ -296,9 +296,19 @@ async function generateAIResponse(userMessage) {
             renderChatMessages();
         } catch (error) {
             console.error('Error saving AI message:', error);
-            // Still display the message locally even if save fails
+            // Still display the message locally
             chatMessages.push(aiMessage);
             renderChatMessages();
+            
+            // Notify user of save failure
+            const errorNotice = document.createElement('div');
+            errorNotice.className = 'system-message error';
+            errorNotice.textContent = '⚠️ Message displayed but not saved to server. Check your connection.';
+            const chatContainer = document.getElementById('chatMessages');
+            chatContainer.appendChild(errorNotice);
+            
+            // Auto-remove notice after 5 seconds
+            setTimeout(() => errorNotice.remove(), 5000);
         }
         
         // Speak the response if voice is enabled

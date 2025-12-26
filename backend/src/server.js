@@ -21,14 +21,17 @@ app.use(cors({
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         
-        // In development, allow any localhost origin
-        if (process.env.NODE_ENV === 'development' && 
-            (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
-            return callback(null, true);
+        // In development, allow localhost origins
+        if (process.env.NODE_ENV === 'development') {
+            const isLocalhost = origin.startsWith('http://localhost:') || 
+                              origin.startsWith('http://127.0.0.1:');
+            if (isLocalhost) {
+                return callback(null, true);
+            }
         }
         
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin)) {
+        // Check if origin exactly matches allowed list
+        if (allowedOrigins.indexOf(origin) !== -1) {
             return callback(null, true);
         }
         
