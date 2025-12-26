@@ -490,7 +490,7 @@ function showTypingIndicator() {
         </div>
     `;
     chatMessagesContainer.appendChild(typingDiv);
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    smoothScrollToBottom(chatMessagesContainer);
 }
 
 // Remove typing indicator
