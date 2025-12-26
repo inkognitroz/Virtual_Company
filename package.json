@@ -1,0 +1,28 @@
+{
+  "name": "virtual-company",
+  "version": "1.0.0",
+  "description": "AI-based Virtual Company that can be set up in minutes",
+  "scripts": {
+    "lint": "eslint *.js --fix",
+    "start": "python3 -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inkognitroz/Virtual_Company.git"
+  },
+  "keywords": [
+    "ai",
+    "virtual-company",
+    "collaboration",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/inkognitroz/Virtual_Company/issues"
+  },
+  "homepage": "https://github.com/inkognitroz/Virtual_Company#readme",
+  "devDependencies": {
+    "eslint": "^8.50.0"
+  }
+}

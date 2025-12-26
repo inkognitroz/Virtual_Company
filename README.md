@@ -30,6 +30,12 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Persistent chat history
 - Role-specific AI-powered responses
 
+### 📊 Data Management
+- **Export/Import**: Backup and restore your entire workspace
+- Export all data or specific components (roles, chats)
+- Import data to merge or migrate between browsers
+- One-click data clearing with confirmation
+
 ### 📹 Video Call Integration
 - **Google Meet**: Create or join meetings directly
 - **Microsoft Teams**: Seamless Teams integration
@@ -77,6 +83,50 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 
 ## 📖 How to Use
 
+### Quick Start Example (5 Minutes)
+
+Get started with Virtual Company in just a few minutes:
+
+1. **Initial Setup**
+   ```
+   - Open https://inkognitroz.github.io/Virtual_Company/
+   - Click "Register here"
+   - Fill in: Email, Username, Password, Full Name
+   - Click "Register" (auto-logged in)
+   ```
+
+2. **Create Your First Role**
+   ```
+   - Go to "Roles & Team" section
+   - Click "+ Add Role"
+   - Example:
+     * Role Name: "Product Manager"
+     * Avatar: 👨‍💼 Manager
+     * Description: "Leads product strategy and roadmap"
+     * AI Instructions: "You are a strategic Product Manager. 
+       Focus on user needs, market fit, and product vision. 
+       Provide actionable insights for product decisions."
+   - Click "Add Role"
+   ```
+
+3. **Start a Conversation**
+   ```
+   - Navigate to "Group Chat"
+   - Select "Send as: Yourself"
+   - Type: "What should our Q1 product priorities be?"
+   - Send message
+   - AI will respond as the Product Manager role
+   ```
+
+4. **Export Your Work**
+   ```
+   - Go to "Settings"
+   - Click "Export All Data"
+   - Save the JSON file as backup
+   ```
+
+### Detailed Usage Guide
+
 ### Getting Started
 
 1. **Register an Account**
@@ -110,13 +160,65 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
    - Use the prompt templates as guidance
    - Leverage role-specific AI instructions for contextual responses
 
+6. **Data Management**
+   - Go to "Settings" section
+   - Export your data regularly for backup
+   - Import data to restore or migrate
+   - Clear data when needed
+
 ## 🔧 Technical Details
+
+### Architecture Overview
+
+The Virtual Company platform follows a modular client-side architecture:
+
+```
+┌─────────────────────────────────────────────────┐
+│          User Interface (HTML/CSS)              │
+├─────────────────────────────────────────────────┤
+│     Authentication Layer (auth.js)              │
+│     - Login/Registration                        │
+│     - Session Management                        │
+├─────────────────────────────────────────────────┤
+│     Core Application (dashboard.js)             │
+│     ├── Role Management                         │
+│     │   - Create/Delete Roles                   │
+│     │   - AI Instructions                       │
+│     ├── Chat System                             │
+│     │   - Message Handling                      │
+│     │   - AI Response Generation                │
+│     ├── AI Integration                          │
+│     │   - OpenAI/Claude/Custom APIs             │
+│     │   - Voice Recognition/Synthesis           │
+│     └── Data Management                         │
+│         - Export/Import                         │
+│         - LocalStorage Persistence              │
+├─────────────────────────────────────────────────┤
+│     Data Storage (LocalStorage)                 │
+│     - Users, Roles, Messages, Config            │
+└─────────────────────────────────────────────────┘
+```
+
+**Data Flow:**
+1. User creates roles with specific AI instructions
+2. Messages are sent through the chat interface
+3. AI models (if configured) process messages using role-specific instructions
+4. Responses are generated and displayed in real-time
+5. All data persists in browser LocalStorage
+
+**Role Orchestration:**
+- Each role contains AI instructions that guide LLM behavior
+- Roles can be selected dynamically for message sending
+- AI responses are context-aware based on role instructions
+- Voice input/output supported for accessibility
 
 ### Technologies Used
 - Pure HTML5, CSS3, and JavaScript (no frameworks required)
 - LocalStorage for data persistence
 - Responsive CSS Grid and Flexbox layouts
 - Modern ES6+ JavaScript features
+- Web Speech API for voice capabilities
+- GitHub Actions for CI/CD
 
 ### Data Storage
 All data is stored locally in your browser using LocalStorage:
@@ -124,11 +226,39 @@ All data is stored locally in your browser using LocalStorage:
 - Created roles
 - Chat messages
 - Session information
+- AI configuration
 
 **Important Notes**:
 - Data is stored locally in your browser. Clearing browser data will reset the application.
 - This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
 - No data is sent to external servers; everything stays in your browser.
+
+## 🔒 Security & Privacy
+
+### Data Storage Security
+- **Local Storage**: All user data, roles, and messages are stored in browser LocalStorage
+- **No External Transmission**: Data never leaves your browser unless you explicitly connect an AI API
+- **Password Storage**: Passwords are stored in plain text in LocalStorage - **NOT recommended for production**
+- **Session Management**: Simple session tokens stored locally
+
+### AI Model Integration
+- **API Keys**: If you connect AI models (OpenAI, Claude), API keys are stored in LocalStorage
+- **Data Sharing**: When AI is enabled, your messages are sent to the configured AI provider
+- **Privacy**: Review AI provider privacy policies before connecting
+
+### Recommendations for Production Use
+1. **Implement Server-Side Authentication**: Use secure backend authentication (OAuth, JWT)
+2. **Encrypt Sensitive Data**: Hash passwords with bcrypt or similar
+3. **Use HTTPS**: Always serve over secure connections
+4. **API Key Security**: Store API keys in environment variables, not client-side
+5. **Data Backup**: Implement regular backups using the export functionality
+6. **Access Control**: Add role-based permissions for enterprise use
+
+### Privacy Features
+- **Export Your Data**: Download all your data anytime using Settings → Export
+- **Clear Data**: Remove all stored data with one click
+- **No Tracking**: No analytics or tracking scripts included
+- **Offline Capable**: Works completely offline (without AI integration)
 
 ## 🎯 Use Cases
 
@@ -148,12 +278,58 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🌟 Future Enhancements
 
-- Real-time AI model integration
+- Real-time AI model integration ✅ (Implemented)
 - Persistent cloud storage option
 - Advanced role permissions
 - Team analytics and insights
-- Export/import functionality for roles and chats
+- Export/import functionality for roles and chats ✅ (Implemented)
 - Real-time collaboration features
+- Multi-language support
+- Mobile app version
+- Plugin system for extensibility
+
+## 🗺️ Roadmap
+
+### Phase 1: Foundation (Current) ✅
+- [x] Core role management system
+- [x] Group chat functionality
+- [x] AI integration (OpenAI, Claude, Custom APIs)
+- [x] Video call integrations (Meet, Teams, WhatsApp)
+- [x] Export/import data functionality
+- [x] Voice input/output support
+- [x] CI/CD pipeline setup
+
+### Phase 2: Enhanced Collaboration (Q1 2026)
+- [ ] Real-time multi-user collaboration
+- [ ] Role-based permissions and access control
+- [ ] Advanced chat features (threads, reactions, mentions)
+- [ ] File sharing and document collaboration
+- [ ] Integration with project management tools (Jira, Trello, Asana)
+- [ ] Enhanced AI model support (Google Gemini, local LLMs)
+
+### Phase 3: Analytics & Intelligence (Q2 2026)
+- [ ] Team productivity analytics
+- [ ] AI-powered insights and recommendations
+- [ ] Conversation sentiment analysis
+- [ ] Role performance metrics
+- [ ] Automated meeting summaries
+- [ ] Smart task extraction from conversations
+
+### Phase 4: Enterprise Features (Q3 2026)
+- [ ] Cloud storage backend option
+- [ ] Enterprise SSO (SAML, OAuth)
+- [ ] Audit logs and compliance features
+- [ ] Custom branding and white-labeling
+- [ ] API for third-party integrations
+- [ ] Advanced security features (encryption, 2FA)
+
+### Phase 5: Scale & Extend (Q4 2026)
+- [ ] Mobile applications (iOS, Android)
+- [ ] Desktop applications (Electron)
+- [ ] Plugin marketplace
+- [ ] Multi-language support (i18n)
+- [ ] Workflow automation builder
+- [ ] Integration marketplace
 
 ## 💡 Tips
 
@@ -161,16 +337,89 @@ This project is open source and available under the [MIT License](LICENSE).
 - **Role Creation**: Create diverse roles to simulate a complete organization
 - **Prompts**: Use structured prompts for better AI responses
 - **Integration**: Bookmark your frequently used video call links for quick access
+- **Data Backup**: Regularly export your data to prevent loss
+- **Voice Input**: Use voice input for faster message composition on mobile
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Setup
+1. Fork and clone the repository
+2. Install dependencies: `npm install`
+3. Run linter: `npm run lint`
+4. Start local server: `npm start`
+5. Test your changes in the browser
+6. Submit a pull request
 
 ---
 
-Built with ❤️ for the future of virtual collaboration 
-# Virtual_Company
-Virtual Company is an AI-based virtual company that can be set up in minutes. The company features the possibility to define all roles necessary to reach company goals and mission. All functions are fully automated and AI-based. 
+Built with ❤️ for the future of virtual collaboration
 
-## Suggested improvements
-- Add a short architecture overview (core services, data flow, and role orchestration) so contributors know how the AI-driven automation is structured.
-- Document a minimal setup/usage example (how to define roles, configure goals/mission, and trigger automation) to make the value proposition tangible.
-- Establish basic quality gates (CI workflow with linting/tests) and a small test suite that validates the automated role assignment logic.
-- Include security and privacy notes (data storage, model usage, and access control) since automation likely handles sensitive business data.
-- Provide a roadmap with 3–5 upcoming milestones (MVP scope, integrations, monitoring/observability) to guide contributions and prioritization.
+## 📋 Next Sprint Suggestions
+
+Based on current implementation and user needs, here are recommended improvements for the next sprint:
+
+### High Priority
+1. **Automated Testing Suite**
+   - Add unit tests for core functions (role management, data export/import, chat functionality)
+   - Implement integration tests for AI API calls
+   - Set up automated testing in CI/CD pipeline
+   - Target: 70% code coverage
+
+2. **Enhanced Error Handling**
+   - Add comprehensive error handling for AI API failures
+   - Implement retry logic with exponential backoff
+   - Show user-friendly error messages
+   - Add error logging and debugging tools
+
+3. **Performance Optimization**
+   - Implement pagination for chat messages (currently loads all messages)
+   - Add lazy loading for roles when count exceeds 50
+   - Optimize localStorage usage (compress data, cleanup old sessions)
+   - Add loading indicators for async operations
+
+### Medium Priority
+4. **Search and Filter Capabilities**
+   - Add search functionality for chat messages
+   - Filter roles by category or tags
+   - Search within role descriptions and AI instructions
+   - Export filtered data subsets
+
+5. **Notification System**
+   - Browser notifications for new AI responses
+   - Notification badges for unread messages
+   - Configurable notification preferences
+   - Sound alerts option
+
+6. **Accessibility Improvements**
+   - Full keyboard navigation support
+   - Screen reader compatibility (ARIA labels)
+   - High contrast mode option
+   - Font size customization
+
+### Low Priority
+7. **UI/UX Enhancements**
+   - Dark/light theme toggle
+   - Customizable color schemes
+   - Markdown support in chat messages
+   - Code syntax highlighting for technical discussions
+
+8. **Extended Analytics**
+   - Message count statistics per role
+   - Chat activity timeline visualization
+   - Role usage analytics
+   - Export analytics reports
+
+9. **Additional Integrations**
+   - Slack webhook integration
+   - Discord bot integration
+   - Email notifications
+   - Calendar integration for scheduling
+
+### Technical Debt
+- Refactor dashboard.js into modular components
+- Add JSDoc documentation for all functions
+- Implement proper state management
+- Add TypeScript definitions (optional migration path)
+- Set up automated dependency updates (Dependabot)

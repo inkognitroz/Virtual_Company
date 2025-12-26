@@ -654,3 +654,187 @@ function setupAIConfigHandlers() {
         });
     }
 }
+
+// ========== EXPORT/IMPORT FUNCTIONALITY ==========
+
+// Export all data
+function exportAllData() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        roles: roles,
+        chatMessages: chatMessages,
+        aiConfig: aiConfig
+    };
+    
+    downloadJSON(exportData, 'virtual-company-backup');
+}
+
+// Export roles only
+function exportRoles() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        roles: roles
+    };
+    
+    downloadJSON(exportData, 'virtual-company-roles');
+}
+
+// Export chats only
+function exportChats() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        chatMessages: chatMessages
+    };
+    
+    downloadJSON(exportData, 'virtual-company-chats');
+}
+
+// Helper function to download JSON
+function downloadJSON(data, filename) {
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Import data
+function importData(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Validate the data
+            if (!importedData.version) {
+                alert('Invalid import file format.');
+                return;
+            }
+            
+            let importedCount = 0;
+            
+            // Import roles if present
+            if (importedData.roles && Array.isArray(importedData.roles)) {
+                const existingIds = roles.map(r => r.id);
+                const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
+                roles.push(...newRoles);
+                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+                importedCount += newRoles.length;
+                renderRoles();
+                updateChatRoleSelector();
+            }
+            
+            // Import chat messages if present
+            if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
+                chatMessages.push(...importedData.chatMessages);
+                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                renderChatMessages();
+            }
+            
+            // Import AI config if present
+            if (importedData.aiConfig) {
+                aiConfig = { ...aiConfig, ...importedData.aiConfig };
+                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            }
+            
+            alert(`Import successful! ${importedCount > 0 ? importedCount + ' new role(s) added. ' : ''}Data has been merged with existing data.`);
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Error importing file. Please make sure it\'s a valid Virtual Company export file.');
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+// Clear all data
+function clearAllData() {
+    if (confirm('Are you sure you want to clear ALL data? This action cannot be undone!\n\nThis will remove:\n- All roles\n- All chat messages\n- AI configuration\n\nPlease export your data first if you want to keep it.')) {
+        if (confirm('Final confirmation: This will permanently delete all your Virtual Company data. Continue?')) {
+            roles = [];
+            chatMessages = [];
+            aiConfig = {};
+            
+            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            
+            renderRoles();
+            updateChatRoleSelector();
+            renderChatMessages();
+            
+            alert('All data has been cleared.');
+        }
+    }
+}
+
+// Clear chats only
+function clearChats() {
+    if (confirm('Are you sure you want to clear all chat messages? This action cannot be undone!')) {
+        chatMessages = [];
+        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        renderChatMessages();
+        alert('Chat history has been cleared.');
+    }
+}
+
+// Setup export/import handlers
+function setupExportImportHandlers() {
+    // Export buttons
+    const exportAllBtn = document.getElementById('exportAllBtn');
+    if (exportAllBtn) {
+        exportAllBtn.addEventListener('click', exportAllData);
+    }
+    
+    const exportRolesBtn = document.getElementById('exportRolesBtn');
+    if (exportRolesBtn) {
+        exportRolesBtn.addEventListener('click', exportRoles);
+    }
+    
+    const exportChatsBtn = document.getElementById('exportChatsBtn');
+    if (exportChatsBtn) {
+        exportChatsBtn.addEventListener('click', exportChats);
+    }
+    
+    // Import button
+    const importDataBtn = document.getElementById('importDataBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    
+    if (importDataBtn && importFileInput) {
+        importDataBtn.addEventListener('click', () => {
+            importFileInput.click();
+        });
+        
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importData(file);
+                e.target.value = ''; // Reset file input
+            }
+        });
+    }
+    
+    // Clear data buttons
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllData);
+    }
+    
+    const clearChatsBtn = document.getElementById('clearChatsBtn');
+    if (clearChatsBtn) {
+        clearChatsBtn.addEventListener('click', clearChats);
+    }
+}
+
+// Call setup on page load
+setupExportImportHandlers();
