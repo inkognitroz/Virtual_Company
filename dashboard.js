@@ -467,42 +467,53 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 // ========== INITIALIZATION ==========
 
 // Initialize on page load
-renderRoles();
-updateChatRoleSelector();
-renderChatMessages();
-initializeVoiceRecognition();
-setupAIConfigHandlers();
-
-// Add some default roles if none exist
-if (roles.length === 0) {
-    const defaultRoles = [
-        {
-            id: 'role-1',
-            name: 'Project Manager',
-            avatar: '👨‍💼',
-            description: 'Oversees project planning, execution, and delivery',
-            aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
-        },
-        {
-            id: 'role-2',
-            name: 'Lead Developer',
-            avatar: '👩‍💻',
-            description: 'Technical lead responsible for code quality and architecture',
-            aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
-        },
-        {
-            id: 'role-3',
-            name: 'AI Assistant',
-            avatar: '🤖',
-            description: 'General purpose AI assistant for various tasks',
-            aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
-        }
-    ];
-    
-    roles = defaultRoles;
-    localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+function initializeApp() {
     renderRoles();
     updateChatRoleSelector();
+    renderChatMessages();
+    initializeVoiceRecognition();
+    setupAIConfigHandlers();
+    setupExportImportHandlers();
+    
+    // Add some default roles if none exist
+    if (roles.length === 0) {
+        const defaultRoles = [
+            {
+                id: 'role-1',
+                name: 'Project Manager',
+                avatar: '👨‍💼',
+                description: 'Oversees project planning, execution, and delivery',
+                aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
+            },
+            {
+                id: 'role-2',
+                name: 'Lead Developer',
+                avatar: '👩‍💻',
+                description: 'Technical lead responsible for code quality and architecture',
+                aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
+            },
+            {
+                id: 'role-3',
+                name: 'AI Assistant',
+                avatar: '🤖',
+                description: 'General purpose AI assistant for various tasks',
+                aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
+            }
+        ];
+        
+        roles = defaultRoles;
+        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        renderRoles();
+        updateChatRoleSelector();
+    }
+}
+
+// Run initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already ready
+    initializeApp();
 }
 
 // ========== VOICE CAPABILITIES ==========
@@ -835,6 +846,3 @@ function setupExportImportHandlers() {
         clearChatsBtn.addEventListener('click', clearChats);
     }
 }
-
-// Call setup on page load
-setupExportImportHandlers();
