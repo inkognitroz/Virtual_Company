@@ -129,11 +129,12 @@ class LLMService:
             
             if response.status_code == 200:
                 data = response.json()
+                usage = data.get("usage", {})
+                total_tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
                 return {
                     "content": data["content"][0]["text"],
                     "model": model,
-                    "tokens_used": data.get("usage", {}).get("input_tokens", 0) + 
-                                   data.get("usage", {}).get("output_tokens", 0)
+                    "tokens_used": total_tokens
                 }
             else:
                 return {

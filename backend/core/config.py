@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./virtual_company.db"
     
     # Security
+    # WARNING: Change this secret key in production!
+    # Generate a secure key: python -c "import secrets; print(secrets.token_urlsafe(32))"
     secret_key: str = "change-this-secret-key-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
