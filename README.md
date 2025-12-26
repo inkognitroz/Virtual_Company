@@ -35,6 +35,14 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - **Microsoft Teams**: Seamless Teams integration
 - **WhatsApp**: Group chat connectivity
 
+### 🔌 MCP Server Integration
+- **Model Context Protocol (MCP)** support for enhanced AI capabilities
+- **Pre-configured servers**: Filesystem, Database, Web Search, GitHub, Calendar
+- **Custom server support**: Add your own MCP servers
+- **Tool & Resource management**: Enable/disable specific capabilities
+- **Real-time configuration**: Configure servers with custom settings
+- **AI context enhancement**: Automatically provide MCP tools to AI roles
+
 ### 🎨 Modern UI
 - Clean, professional dark theme interface
 - Responsive design for desktop and mobile
@@ -109,6 +117,20 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
    - Connect your preferred AI model (OpenAI, Claude, etc.)
    - Use the prompt templates as guidance
    - Leverage role-specific AI instructions for contextual responses
+
+6. **MCP Server Setup**
+   - Navigate to "MCP Servers" section
+   - Review the pre-configured MCP servers (Filesystem, Database, Web Search, GitHub, Calendar)
+   - Toggle switches to enable/disable servers
+   - Click "⚙️ Configure" to set up server-specific settings:
+     - **Filesystem**: Set allowed paths and read-only mode
+     - **Database**: Configure connection strings and database type
+     - **Web Search**: Add API keys for search providers
+     - **GitHub**: Set up GitHub tokens and default repositories
+     - **Calendar**: Configure calendar provider API keys
+   - Click "+ Add Custom Server" to create your own MCP integrations
+   - View active tools and resources in the "Active Tools & Resources" section
+
 
 ## 🔧 Technical Details
 
