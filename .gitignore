@@ -22,3 +22,26 @@ package-lock.json
 # Build artifacts
 dist/
 build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# Backend
+backend/.env
+backend/virtual_company.db
+backend/virtual_company.db-*
