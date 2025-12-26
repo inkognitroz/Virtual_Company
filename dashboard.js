@@ -290,9 +290,16 @@ async function generateAIResponse(userMessage) {
         // Remove typing indicator
         removeTypingIndicator();
         
-        await API.messages.create(aiMessage);
-        chatMessages.push(aiMessage);
-        renderChatMessages();
+        try {
+            await API.messages.create(aiMessage);
+            chatMessages.push(aiMessage);
+            renderChatMessages();
+        } catch (error) {
+            console.error('Error saving AI message:', error);
+            // Still display the message locally even if save fails
+            chatMessages.push(aiMessage);
+            renderChatMessages();
+        }
         
         // Speak the response if voice is enabled
         if (aiConfig.voiceEnabled) {
