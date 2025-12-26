@@ -48,7 +48,9 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 
 ## 🛠️ Setup Instructions
 
-### For GitHub Pages
+### Option 1: Client-Side Only (GitHub Pages)
+
+Perfect for quick demos and personal use without server infrastructure.
 
 1. **Fork or Clone this repository**
    ```bash
@@ -65,7 +67,76 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 3. **Access Your Site**
    - Your site will be available at: `https://[your-username].github.io/Virtual_Company/`
 
-### Local Development
+### Option 2: Full-Stack with Backend (Production)
+
+Recommended for production use with persistent storage, multi-user support, and advanced features.
+
+#### Quick Start with Docker
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/inkognitroz/Virtual_Company.git
+   cd Virtual_Company
+   ```
+
+2. **Set up environment variables**
+   ```bash
+   cp backend/.env.example backend/.env
+   # Edit backend/.env and set your configuration
+   ```
+
+3. **Start with Docker Compose**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Access the services**
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
+   - Frontend: Open index.html in browser (configure to point to localhost:8000)
+
+#### Manual Setup
+
+1. **Backend Setup**
+   ```bash
+   cd backend
+   
+   # Create virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Set up environment
+   cp .env.example .env
+   # Edit .env with your configuration
+   
+   # Run the server
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+2. **Frontend Setup**
+   - Update frontend configuration to point to your backend URL
+   - See [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) for detailed integration steps
+
+#### Deployment to Cloud
+
+**Railway / Render / Fly.io:**
+1. Connect your GitHub repository
+2. Set environment variables:
+   - `DATABASE_URL` - PostgreSQL connection string
+   - `SECRET_KEY` - Random secret for JWT
+   - `OPENAI_API_KEY` (optional)
+   - `ALLOWED_ORIGINS` - Your frontend URL
+3. Deploy from `backend` directory
+4. Update frontend to use your backend URL
+
+**Detailed documentation:**
+- Backend: [backend/README.md](backend/README.md)
+- Integration: [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)
+
+### Local Development (Client-Side)
 
 1. **Clone the repository**
    ```bash
@@ -170,7 +241,10 @@ Get started with Virtual Company in just a few minutes:
 
 ### Architecture Overview
 
-The Virtual Company platform follows a modular client-side architecture:
+The Virtual Company platform now supports **two deployment modes**:
+
+#### 1. Client-Side Mode (Current - GitHub Pages)
+A fully client-side application using localStorage:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -199,12 +273,47 @@ The Virtual Company platform follows a modular client-side architecture:
 └─────────────────────────────────────────────────┘
 ```
 
+#### 2. Full-Stack Mode (New - FastAPI Backend)
+Production-ready architecture with backend services:
+
+```
+┌──────────────────┐     HTTP/WebSockets       ┌──────────────────┐
+│     Client       │ ─────────────────────────▶ │    FastAPI       │
+│ (VirtualCompany  │ ◀────────────────────────── │    Backend       │
+│  UI)             │       Real-time updates    │ (REST, WS, DB)   │
+└──────────────────┘                            └──────────────────┘
+         │                                                │
+         │ WebRTC (voice/video)                           │
+         │                                                │
+         ▼                                                ▼
+  ┌─────────────┐                                 ┌───────────────┐
+  │  WebRTC     │                                 │ LLM Providers │
+  │  PeerConn   │◀──Ephemeral tokens─────────────▶│  (OpenAI,     │
+  │  (browser)  │                                 │  Anthropic,   │
+  └─────────────┘                                 │  OpenRouter)  │
+                                                  └───────────────┘
+                                                          │
+                                                          ▼
+                                                  ┌───────────────┐
+                                                  │  PostgreSQL   │
+                                                  │   Database    │
+                                                  └───────────────┘
+```
+
+**Backend Features:**
+- **Authentication**: JWT-based secure authentication
+- **Database**: PostgreSQL/SQLite for persistent storage
+- **Real-time**: WebSocket support for live chat
+- **WebRTC**: Voice and video call signaling
+- **LLM Integration**: Multi-provider support (OpenAI, Anthropic, OpenRouter)
+- **Scalable**: Docker-ready with horizontal scaling support
+
 **Data Flow:**
 1. User creates roles with specific AI instructions
-2. Messages are sent through the chat interface
-3. AI models (if configured) process messages using role-specific instructions
+2. Messages are sent through the chat interface (localStorage or WebSocket)
+3. AI models process messages using role-specific instructions
 4. Responses are generated and displayed in real-time
-5. All data persists in browser LocalStorage
+5. Data persists in localStorage (client-side) or database (full-stack)
 
 **Role Orchestration:**
 - Each role contains AI instructions that guide LLM behavior
@@ -213,14 +322,27 @@ The Virtual Company platform follows a modular client-side architecture:
 - Voice input/output supported for accessibility
 
 ### Technologies Used
+
+**Frontend:**
 - Pure HTML5, CSS3, and JavaScript (no frameworks required)
-- LocalStorage for data persistence
+- LocalStorage for data persistence (client-side mode)
 - Responsive CSS Grid and Flexbox layouts
 - Modern ES6+ JavaScript features
 - Web Speech API for voice capabilities
+- WebSocket and WebRTC for real-time communication
+
+**Backend (Optional - Full-Stack Mode):**
+- FastAPI (Python) - Modern async web framework
+- SQLModel - SQL database with Python type hints
+- PostgreSQL - Production database (SQLite for development)
+- JWT - Secure authentication
+- WebSocket - Real-time bidirectional communication
+- Docker - Containerization and deployment
 - GitHub Actions for CI/CD
 
 ### Data Storage
+
+**Client-Side Mode:**
 All data is stored locally in your browser using LocalStorage:
 - User accounts
 - Created roles
@@ -228,10 +350,19 @@ All data is stored locally in your browser using LocalStorage:
 - Session information
 - AI configuration
 
+**Full-Stack Mode:**
+Data is stored in a PostgreSQL database:
+- User profiles with hashed passwords
+- Roles and AI instructions
+- Chat rooms and message history
+- API keys (encrypted)
+- Session management via JWT tokens
+
 **Important Notes**:
-- Data is stored locally in your browser. Clearing browser data will reset the application.
-- This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
-- No data is sent to external servers; everything stays in your browser.
+- **Client-side**: Data is stored locally in your browser. Clearing browser data will reset the application.
+- **Full-stack**: Data persists in the database and is accessible from any device.
+- For production use, the full-stack mode provides secure authentication and data persistence.
+- See [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) for backend integration instructions.
 
 ## 🔒 Security & Privacy
 
@@ -279,18 +410,18 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🌟 Future Enhancements
 
 - Real-time AI model integration ✅ (Implemented)
-- Persistent cloud storage option
+- Persistent cloud storage option ✅ (Backend implemented)
 - Advanced role permissions
 - Team analytics and insights
 - Export/import functionality for roles and chats ✅ (Implemented)
-- Real-time collaboration features
+- Real-time collaboration features ✅ (WebSocket support added)
 - Multi-language support
 - Mobile app version
 - Plugin system for extensibility
 
 ## 🗺️ Roadmap
 
-### Phase 1: Foundation (Current) ✅
+### Phase 1: Foundation ✅ (Completed)
 - [x] Core role management system
 - [x] Group chat functionality
 - [x] AI integration (OpenAI, Claude, Custom APIs)
@@ -298,8 +429,18 @@ This project is open source and available under the [MIT License](LICENSE).
 - [x] Export/import data functionality
 - [x] Voice input/output support
 - [x] CI/CD pipeline setup
+- [x] **FastAPI backend with database persistence**
+- [x] **JWT authentication system**
+- [x] **WebSocket real-time chat**
+- [x] **Multi-provider LLM integration**
+- [x] **WebRTC signaling infrastructure**
+- [x] **Docker deployment support**
 
-### Phase 2: Enhanced Collaboration (Q1 2026)
+### Phase 2: Frontend-Backend Integration (Q1 2024)
+- [ ] Migrate frontend to use backend APIs
+- [ ] Implement WebSocket chat in UI
+- [ ] Add WebRTC voice/video UI controls
+- [ ] User profile management interface
 - [ ] Real-time multi-user collaboration
 - [ ] Role-based permissions and access control
 - [ ] Advanced chat features (threads, reactions, mentions)
@@ -307,7 +448,7 @@ This project is open source and available under the [MIT License](LICENSE).
 - [ ] Integration with project management tools (Jira, Trello, Asana)
 - [ ] Enhanced AI model support (Google Gemini, local LLMs)
 
-### Phase 3: Analytics & Intelligence (Q2 2026)
+### Phase 3: Analytics & Intelligence (Q2 2024)
 - [ ] Team productivity analytics
 - [ ] AI-powered insights and recommendations
 - [ ] Conversation sentiment analysis
@@ -315,15 +456,15 @@ This project is open source and available under the [MIT License](LICENSE).
 - [ ] Automated meeting summaries
 - [ ] Smart task extraction from conversations
 
-### Phase 4: Enterprise Features (Q3 2026)
-- [ ] Cloud storage backend option
+### Phase 4: Enterprise Features (Q3 2024)
+- [x] Cloud storage backend option (FastAPI backend ready)
 - [ ] Enterprise SSO (SAML, OAuth)
 - [ ] Audit logs and compliance features
 - [ ] Custom branding and white-labeling
 - [ ] API for third-party integrations
 - [ ] Advanced security features (encryption, 2FA)
 
-### Phase 5: Scale & Extend (Q4 2026)
+### Phase 5: Scale & Extend (Q4 2024)
 - [ ] Mobile applications (iOS, Android)
 - [ ] Desktop applications (Electron)
 - [ ] Plugin marketplace
