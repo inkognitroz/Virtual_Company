@@ -2,21 +2,19 @@
 
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
-if (!currentUser) {
+const authToken = localStorage.getItem('authToken');
+
+if (!currentUser || !authToken) {
     window.location.href = 'index.html';
 }
 
 // Display user info
 document.getElementById('userName').textContent = currentUser.name || currentUser.username;
 
-// Initialize roles from localStorage
-let roles = JSON.parse(localStorage.getItem('virtualCompanyRoles') || '[]');
-
-// Initialize chat messages
-let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages') || '[]');
-
-// AI Configuration
-let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
+// Initialize data
+let roles = [];
+let chatMessages = [];
+let aiConfig = {};
 
 // Voice recognition and synthesis
 let recognition = null;
@@ -45,7 +43,14 @@ navItems.forEach(item => {
 });
 
 // Logout handling
-document.getElementById('logoutBtn').addEventListener('click', () => {
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try {
+        await API.auth.logout();
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+    
+    localStorage.removeItem('authToken');
     localStorage.removeItem('virtualCompanyUser');
     window.location.href = 'index.html';
 });
@@ -72,7 +77,7 @@ window.addEventListener('click', (e) => {
 });
 
 // Add role form handling
-document.getElementById('addRoleForm').addEventListener('submit', (e) => {
+document.getElementById('addRoleForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const role = {
@@ -83,15 +88,19 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
         aiInstructions: document.getElementById('aiInstructions').value
     };
     
-    roles.push(role);
-    localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-    
-    renderRoles();
-    updateChatRoleSelector();
-    
-    // Reset form and close modal
-    document.getElementById('addRoleForm').reset();
-    addRoleModal.style.display = 'none';
+    try {
+        await API.roles.create(role);
+        roles.push(role);
+        
+        renderRoles();
+        updateChatRoleSelector();
+        
+        // Reset form and close modal
+        document.getElementById('addRoleForm').reset();
+        addRoleModal.style.display = 'none';
+    } catch (error) {
+        alert('Error creating role: ' + error.message);
+    }
 });
 
 // Render roles
@@ -131,12 +140,16 @@ function renderRoles() {
 }
 
 // Delete role
-function deleteRole(roleId) {
+async function deleteRole(roleId) {
     if (confirm('Are you sure you want to delete this role?')) {
-        roles = roles.filter(r => r.id !== roleId);
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-        renderRoles();
-        updateChatRoleSelector();
+        try {
+            await API.roles.delete(roleId);
+            roles = roles.filter(r => r.id !== roleId);
+            renderRoles();
+            updateChatRoleSelector();
+        } catch (error) {
+            alert('Error deleting role: ' + error.message);
+        }
     }
 }
 
@@ -221,15 +234,19 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
         };
     }
     
-    chatMessages.push(message);
-    localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
-    
-    renderChatMessages();
-    chatInput.value = '';
-    
-    // If user sent a message, generate AI response
-    if (chatRole.value === 'user' && roles.length > 0) {
-        await generateAIResponse(content);
+    try {
+        await API.messages.create(message);
+        chatMessages.push(message);
+        
+        renderChatMessages();
+        chatInput.value = '';
+        
+        // If user sent a message, generate AI response
+        if (chatRole.value === 'user' && roles.length > 0) {
+            await generateAIResponse(content);
+        }
+    } catch (error) {
+        alert('Error sending message: ' + error.message);
     }
 });
 
@@ -273,8 +290,8 @@ async function generateAIResponse(userMessage) {
         // Remove typing indicator
         removeTypingIndicator();
         
+        await API.messages.create(aiMessage);
         chatMessages.push(aiMessage);
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
         renderChatMessages();
         
         // Speak the response if voice is enabled
@@ -467,45 +484,93 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 // ========== INITIALIZATION ==========
 
 // Initialize on page load
-function initializeApp() {
-    renderRoles();
-    updateChatRoleSelector();
-    renderChatMessages();
-    initializeVoiceRecognition();
-    setupAIConfigHandlers();
-    setupExportImportHandlers();
-    
-    // Add some default roles if none exist
-    if (roles.length === 0) {
-        const defaultRoles = [
-            {
-                id: 'role-1',
-                name: 'Project Manager',
-                avatar: '👨‍💼',
-                description: 'Oversees project planning, execution, and delivery',
-                aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
-            },
-            {
-                id: 'role-2',
-                name: 'Lead Developer',
-                avatar: '👩‍💻',
-                description: 'Technical lead responsible for code quality and architecture',
-                aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
-            },
-            {
-                id: 'role-3',
-                name: 'AI Assistant',
-                avatar: '🤖',
-                description: 'General purpose AI assistant for various tasks',
-                aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
-            }
-        ];
+async function initializeApp() {
+    try {
+        // Load roles from backend
+        const rolesData = await API.roles.getAll();
+        roles = rolesData.map(r => ({
+            id: r.id,
+            name: r.name,
+            avatar: r.avatar,
+            description: r.description || '',
+            aiInstructions: r.ai_instructions || ''
+        }));
         
-        roles = defaultRoles;
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        // Load messages from backend
+        const messagesData = await API.messages.getAll();
+        chatMessages = messagesData.map(m => ({
+            sender: m.sender,
+            senderName: m.sender_name,
+            avatar: m.avatar,
+            content: m.content,
+            time: m.time,
+            roleInstructions: m.role_instructions,
+            isAI: m.is_ai === 1
+        }));
+        
+        // Load AI config from backend
+        const configData = await API.aiConfig.get();
+        aiConfig = {
+            provider: configData.provider,
+            apiKey: configData.apiKey,
+            endpoint: configData.endpoint,
+            voiceEnabled: configData.voiceEnabled
+        };
+        
         renderRoles();
         updateChatRoleSelector();
+        renderChatMessages();
+        initializeVoiceRecognition();
+        setupAIConfigHandlers();
+        setupExportImportHandlers();
+        
+        // Add some default roles if none exist
+        if (roles.length === 0) {
+            await createDefaultRoles();
+        }
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        alert('Error loading data from server. Please try refreshing the page.');
     }
+}
+
+// Create default roles
+async function createDefaultRoles() {
+    const defaultRoles = [
+        {
+            id: 'role-1',
+            name: 'Project Manager',
+            avatar: '👨‍💼',
+            description: 'Oversees project planning, execution, and delivery',
+            aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
+        },
+        {
+            id: 'role-2',
+            name: 'Lead Developer',
+            avatar: '👩‍💻',
+            description: 'Technical lead responsible for code quality and architecture',
+            aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
+        },
+        {
+            id: 'role-3',
+            name: 'AI Assistant',
+            avatar: '🤖',
+            description: 'General purpose AI assistant for various tasks',
+            aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
+        }
+    ];
+    
+    for (const role of defaultRoles) {
+        try {
+            await API.roles.create(role);
+            roles.push(role);
+        } catch (error) {
+            console.error('Error creating default role:', error);
+        }
+    }
+    
+    renderRoles();
+    updateChatRoleSelector();
 }
 
 // Run initialization when DOM is ready
@@ -601,16 +666,20 @@ function setupAIConfigHandlers() {
     // OpenAI Connect
     const openaiConnectBtn = document.querySelector('.ai-model-card:nth-child(1) button');
     if (openaiConnectBtn) {
-        openaiConnectBtn.addEventListener('click', () => {
+        openaiConnectBtn.addEventListener('click', async () => {
             const apiKeyInput = document.querySelector('.ai-model-card:nth-child(1) input');
             const apiKey = apiKeyInput.value.trim();
             
             if (apiKey) {
                 aiConfig.provider = 'openai';
                 aiConfig.apiKey = apiKey;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
-                alert('OpenAI connected successfully! AI responses will now use GPT-3.5.');
-                apiKeyInput.value = '';
+                try {
+                    await API.aiConfig.update(aiConfig);
+                    alert('OpenAI connected successfully! AI responses will now use GPT-3.5.');
+                    apiKeyInput.value = '';
+                } catch (error) {
+                    alert('Error saving AI configuration: ' + error.message);
+                }
             } else {
                 alert('Please enter your OpenAI API key');
             }
@@ -620,16 +689,20 @@ function setupAIConfigHandlers() {
     // Claude Connect
     const claudeConnectBtn = document.querySelector('.ai-model-card:nth-child(2) button');
     if (claudeConnectBtn) {
-        claudeConnectBtn.addEventListener('click', () => {
+        claudeConnectBtn.addEventListener('click', async () => {
             const apiKeyInput = document.querySelector('.ai-model-card:nth-child(2) input');
             const apiKey = apiKeyInput.value.trim();
             
             if (apiKey) {
                 aiConfig.provider = 'claude';
                 aiConfig.apiKey = apiKey;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
-                alert('Claude connected successfully! AI responses will now use Claude.');
-                apiKeyInput.value = '';
+                try {
+                    await API.aiConfig.update(aiConfig);
+                    alert('Claude connected successfully! AI responses will now use Claude.');
+                    apiKeyInput.value = '';
+                } catch (error) {
+                    alert('Error saving AI configuration: ' + error.message);
+                }
             } else {
                 alert('Please enter your Claude API key');
             }
@@ -639,16 +712,20 @@ function setupAIConfigHandlers() {
     // Custom API Connect
     const customConnectBtn = document.querySelector('.ai-model-card:nth-child(3) button');
     if (customConnectBtn) {
-        customConnectBtn.addEventListener('click', () => {
+        customConnectBtn.addEventListener('click', async () => {
             const endpointInput = document.querySelector('.ai-model-card:nth-child(3) input');
             const endpoint = endpointInput.value.trim();
             
             if (endpoint) {
                 aiConfig.provider = 'custom';
                 aiConfig.endpoint = endpoint;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
-                alert('Custom API connected successfully!');
-                endpointInput.value = '';
+                try {
+                    await API.aiConfig.update(aiConfig);
+                    alert('Custom API connected successfully!');
+                    endpointInput.value = '';
+                } catch (error) {
+                    alert('Error saving AI configuration: ' + error.message);
+                }
             } else {
                 alert('Please enter your API endpoint');
             }
@@ -659,9 +736,13 @@ function setupAIConfigHandlers() {
     const voiceToggle = document.getElementById('voiceToggle');
     if (voiceToggle) {
         voiceToggle.checked = aiConfig.voiceEnabled || false;
-        voiceToggle.addEventListener('change', (e) => {
+        voiceToggle.addEventListener('change', async (e) => {
             aiConfig.voiceEnabled = e.target.checked;
-            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            try {
+                await API.aiConfig.update(aiConfig);
+            } catch (error) {
+                console.error('Error updating voice setting:', error);
+            }
         });
     }
 }
@@ -769,33 +850,46 @@ function importData(file) {
 }
 
 // Clear all data
-function clearAllData() {
+async function clearAllData() {
     if (confirm('Are you sure you want to clear ALL data? This action cannot be undone!\n\nThis will remove:\n- All roles\n- All chat messages\n- AI configuration\n\nPlease export your data first if you want to keep it.')) {
         if (confirm('Final confirmation: This will permanently delete all your Virtual Company data. Continue?')) {
-            roles = [];
-            chatMessages = [];
-            aiConfig = {};
-            
-            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
-            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
-            
-            renderRoles();
-            updateChatRoleSelector();
-            renderChatMessages();
-            
-            alert('All data has been cleared.');
+            try {
+                // Clear all data from backend
+                const allRoles = [...roles];
+                for (const role of allRoles) {
+                    await API.roles.delete(role.id);
+                }
+                await API.messages.clearAll();
+                await API.aiConfig.update({ provider: null, apiKey: null, endpoint: null, voiceEnabled: false });
+                
+                // Clear local data
+                roles = [];
+                chatMessages = [];
+                aiConfig = {};
+                
+                renderRoles();
+                updateChatRoleSelector();
+                renderChatMessages();
+                
+                alert('All data has been cleared.');
+            } catch (error) {
+                alert('Error clearing data: ' + error.message);
+            }
         }
     }
 }
 
 // Clear chats only
-function clearChats() {
+async function clearChats() {
     if (confirm('Are you sure you want to clear all chat messages? This action cannot be undone!')) {
-        chatMessages = [];
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
-        renderChatMessages();
-        alert('Chat history has been cleared.');
+        try {
+            await API.messages.clearAll();
+            chatMessages = [];
+            renderChatMessages();
+            alert('Chat history has been cleared.');
+        } catch (error) {
+            alert('Error clearing chats: ' + error.message);
+        }
     }
 }
 
