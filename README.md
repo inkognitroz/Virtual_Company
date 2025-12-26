@@ -2,14 +2,25 @@
 
 Virtual Company is an AI-based Virtual Company that can be set up in minutes. The platform features the possibility to define all roles necessary to reach company goals and mission. All functions are designed to be fully automated and AI-based.
 
+**NEW**: Now with optional backend support for secure data persistence and multi-device access! 🚀
+
 ## 🚀 Live Demo
 
 Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https://inkognitroz.github.io/Virtual_Company/)
 
+## 📚 Documentation
+
+- **[Quick Start Guide](QUICKSTART.md)** - Get running in 5 minutes
+- **[Backend Setup](BACKEND_SETUP.md)** - Set up the Node.js/Express backend
+- **[API Documentation](API_DOCUMENTATION.md)** - Complete REST API reference
+- **[Migration Guide](MIGRATION_GUIDE.md)** - Switch from client-only to backend mode
+- **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production (Heroku, AWS, Docker, etc.)
+
 ## ✨ Features
 
-### 🔐 Easy Authentication
-- Simple login/registration system
+### 🔐 Secure Authentication
+- **Client Mode**: Simple browser-based login/registration
+- **Backend Mode**: JWT authentication with password hashing
 - Email or username-based authentication
 - Secure session management
 
@@ -17,6 +28,7 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Create custom roles for your virtual company
 - Assign avatars and descriptions to each role
 - Define AI instructions for each role to guide LLM behavior
+- **Backend Mode**: Persistent roles across devices
 
 ### 🤖 AI Integration
 - Built-in support for AI model integration
@@ -29,12 +41,14 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Send messages as yourself or any created role
 - Persistent chat history
 - Role-specific AI-powered responses
+- **Backend Mode**: Messages stored in database
 
 ### 📊 Data Management
 - **Export/Import**: Backup and restore your entire workspace
 - Export all data or specific components (roles, chats)
 - Import data to merge or migrate between browsers
 - One-click data clearing with confirmation
+- **Backend Mode**: Automatic persistence to MongoDB
 
 ### 📹 Video Call Integration
 - **Google Meet**: Create or join meetings directly
@@ -46,7 +60,64 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Responsive design for desktop and mobile
 - Intuitive navigation and user experience
 
+### 🔒 Backend Features (Optional)
+- **Secure Authentication**: Bcrypt password hashing, JWT tokens
+- **Data Persistence**: MongoDB database storage
+- **Multi-Device**: Access from any browser/device
+- **API-First**: RESTful API for all operations
+- **Production Ready**: Rate limiting, input validation, security headers
+- **Docker Support**: Easy deployment with docker-compose
+
 ## 🛠️ Setup Instructions
+
+### Quick Start (Client-Only Mode)
+
+The application works out-of-the-box without any backend setup:
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/inkognitroz/Virtual_Company.git
+   cd Virtual_Company
+   ```
+
+2. **Open in browser**
+   - Simply open `index.html` in your web browser
+   - Or use a local server:
+     ```bash
+     npm start
+     # Then visit http://localhost:8000
+     ```
+
+All data is stored in your browser's localStorage. No server required!
+
+### Full Stack Mode (With Backend)
+
+For persistent data storage and enhanced security:
+
+1. **Quick setup**
+   ```bash
+   git clone https://github.com/inkognitroz/Virtual_Company.git
+   cd Virtual_Company
+   npm run setup  # Installs all dependencies
+   ```
+
+2. **Configure backend**
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your MongoDB connection and secrets
+   ```
+
+3. **Start everything**
+   ```bash
+   npm run dev  # Runs both frontend and backend
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:8000
+   - Backend API: http://localhost:5000/api
+
+📖 **Detailed backend setup guide**: See [BACKEND_SETUP.md](BACKEND_SETUP.md)
 
 ### For GitHub Pages
 
@@ -65,21 +136,6 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 3. **Access Your Site**
    - Your site will be available at: `https://[your-username].github.io/Virtual_Company/`
 
-### Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/inkognitroz/Virtual_Company.git
-   cd Virtual_Company
-   ```
-
-2. **Open in browser**
-   - Simply open `index.html` in your web browser
-   - Or use a local server:
-     ```bash
-     python -m http.server 8000
-     # Then visit http://localhost:8000
-     ```
 
 ## 📖 How to Use
 
@@ -170,8 +226,9 @@ Get started with Virtual Company in just a few minutes:
 
 ### Architecture Overview
 
-The Virtual Company platform follows a modular client-side architecture:
+The Virtual Company platform supports both client-side and full-stack architectures:
 
+#### Client-Only Mode (Default)
 ```
 ┌─────────────────────────────────────────────────┐
 │          User Interface (HTML/CSS)              │
@@ -199,12 +256,61 @@ The Virtual Company platform follows a modular client-side architecture:
 └─────────────────────────────────────────────────┘
 ```
 
-**Data Flow:**
+#### Full-Stack Mode (Backend Enabled)
+```
+┌─────────────────────────────────────────────────┐
+│          User Interface (HTML/CSS)              │
+├─────────────────────────────────────────────────┤
+│         API Client Layer (api.js)               │
+│         - HTTP Request Handling                 │
+│         - JWT Token Management                  │
+├─────────────────────────────────────────────────┤
+│     Frontend Application (auth.js, dashboard.js)│
+│     - User Interactions                         │
+│     - UI Updates                                │
+│     - API Integration                           │
+└─────────────────────────────────────────────────┘
+                        ↕ REST API
+┌─────────────────────────────────────────────────┐
+│        Backend Server (Express.js)              │
+├─────────────────────────────────────────────────┤
+│     Authentication & Authorization              │
+│     - JWT Token Generation/Validation           │
+│     - Password Hashing (bcrypt)                 │
+│     - Session Management                        │
+├─────────────────────────────────────────────────┤
+│     Business Logic Controllers                  │
+│     ├── Auth Controller                         │
+│     ├── Role Controller                         │
+│     └── Message Controller                      │
+├─────────────────────────────────────────────────┤
+│     Security Middleware                         │
+│     - Rate Limiting                             │
+│     - Input Validation                          │
+│     - CORS Protection                           │
+│     - Helmet Security Headers                   │
+├─────────────────────────────────────────────────┤
+│     Database Layer (MongoDB/Mongoose)           │
+│     - User Model                                │
+│     - Role Model                                │
+│     - Message Model                             │
+└─────────────────────────────────────────────────┘
+```
+
+
+**Data Flow (Client-Only Mode):**
 1. User creates roles with specific AI instructions
 2. Messages are sent through the chat interface
 3. AI models (if configured) process messages using role-specific instructions
 4. Responses are generated and displayed in real-time
 5. All data persists in browser LocalStorage
+
+**Data Flow (Backend Mode):**
+1. User authenticates via backend API (JWT token issued)
+2. All CRUD operations go through REST API endpoints
+3. Data is validated and sanitized on the server
+4. MongoDB stores all persistent data
+5. Real-time updates via polling or WebSocket (future)
 
 **Role Orchestration:**
 - Each role contains AI instructions that guide LLM behavior
@@ -213,14 +319,31 @@ The Virtual Company platform follows a modular client-side architecture:
 - Voice input/output supported for accessibility
 
 ### Technologies Used
+
+**Frontend:**
 - Pure HTML5, CSS3, and JavaScript (no frameworks required)
-- LocalStorage for data persistence
 - Responsive CSS Grid and Flexbox layouts
 - Modern ES6+ JavaScript features
+- Fetch API for backend communication
 - Web Speech API for voice capabilities
+
+**Backend:**
+- Node.js & Express.js for server
+- MongoDB & Mongoose for database
+- JWT for authentication
+- Bcrypt for password hashing
+- Express-validator for input validation
+- Helmet.js for security headers
+- Rate limiting for API protection
+
+**DevOps:**
 - GitHub Actions for CI/CD
+- Environment-based configuration
+- Modular architecture for scalability
 
 ### Data Storage
+
+**Client-Only Mode (Default):**
 All data is stored locally in your browser using LocalStorage:
 - User accounts
 - Created roles
@@ -228,37 +351,73 @@ All data is stored locally in your browser using LocalStorage:
 - Session information
 - AI configuration
 
+**Backend Mode:**
+Data is stored in MongoDB with the following collections:
+- `users` - User accounts with hashed passwords
+- `roles` - User-created roles with AI instructions
+- `messages` - Chat messages with timestamps
+
 **Important Notes**:
-- Data is stored locally in your browser. Clearing browser data will reset the application.
-- This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
-- No data is sent to external servers; everything stays in your browser.
+- **Client-only**: Data is stored locally in your browser. Clearing browser data will reset the application.
+- **Backend**: Data persists across devices and browsers. Requires MongoDB setup.
 
 ## 🔒 Security & Privacy
 
-### Data Storage Security
+### Client-Only Mode
+
+**Data Storage Security:**
 - **Local Storage**: All user data, roles, and messages are stored in browser LocalStorage
 - **No External Transmission**: Data never leaves your browser unless you explicitly connect an AI API
 - **Password Storage**: Passwords are stored in plain text in LocalStorage - **NOT recommended for production**
 - **Session Management**: Simple session tokens stored locally
+
+### Backend Mode (When Enabled)
+
+**Security Features:**
+- ✅ **Password Hashing**: Bcrypt with salt for secure password storage
+- ✅ **JWT Authentication**: Secure token-based authentication
+- ✅ **Input Validation**: All API inputs validated and sanitized
+- ✅ **Rate Limiting**: Protection against brute force attacks
+- ✅ **Security Headers**: Helmet.js for HTTP header security
+- ✅ **CORS Protection**: Controlled cross-origin resource sharing
+- ✅ **Database Security**: MongoDB with user permissions
+
+**Data Protection:**
+- Passwords never stored in plain text
+- JWT tokens with configurable expiration
+- User data isolated by account
+- HTTPS recommended for production
+- Environment variable configuration
 
 ### AI Model Integration
 - **API Keys**: If you connect AI models (OpenAI, Claude), API keys are stored in LocalStorage
 - **Data Sharing**: When AI is enabled, your messages are sent to the configured AI provider
 - **Privacy**: Review AI provider privacy policies before connecting
 
-### Recommendations for Production Use
-1. **Implement Server-Side Authentication**: Use secure backend authentication (OAuth, JWT)
-2. **Encrypt Sensitive Data**: Hash passwords with bcrypt or similar
-3. **Use HTTPS**: Always serve over secure connections
-4. **API Key Security**: Store API keys in environment variables, not client-side
-5. **Data Backup**: Implement regular backups using the export functionality
-6. **Access Control**: Add role-based permissions for enterprise use
+### Production Deployment Checklist
+
+**Backend Configuration:**
+1. ✅ Change `JWT_SECRET` to a strong random value
+2. ✅ Use MongoDB Atlas or secure MongoDB instance
+3. ✅ Set `NODE_ENV=production`
+4. ✅ Update `CORS_ORIGIN` to your domain
+5. ✅ Enable HTTPS (use reverse proxy like nginx)
+6. ✅ Configure rate limiting appropriately
+7. ✅ Set up regular database backups
+8. ✅ Monitor logs and errors
+
+**General Security:**
+1. **Use HTTPS**: Always serve over secure connections
+2. **API Key Security**: Store API keys in environment variables, not client-side
+3. **Access Control**: Implement role-based permissions for enterprise use
+4. **Regular Updates**: Keep dependencies updated
 
 ### Privacy Features
 - **Export Your Data**: Download all your data anytime using Settings → Export
 - **Clear Data**: Remove all stored data with one click
 - **No Tracking**: No analytics or tracking scripts included
 - **Offline Capable**: Works completely offline (without AI integration)
+- **Data Ownership**: You control your data completely
 
 ## 🎯 Use Cases
 
