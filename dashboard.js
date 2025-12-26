@@ -156,7 +156,7 @@ function updateChatRoleSelector() {
 }
 
 // Render chat messages
-function renderChatMessages() {
+function renderChatMessages(scrollToBottom = true) {
     const chatMessagesContainer = document.getElementById('chatMessages');
     
     // Keep system message and add all chat messages
@@ -182,19 +182,74 @@ function renderChatMessages() {
     
     chatMessagesContainer.innerHTML = messagesHTML;
     
-    // Scroll to bottom
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    // Smooth scroll to bottom
+    if (scrollToBottom) {
+        smoothScrollToBottom(chatMessagesContainer);
+    }
+}
+
+// Add new message to chat (more efficient than re-rendering all)
+function appendChatMessage(message) {
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    const messageClass = message.sender === 'user' ? 'user' : 'role';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${messageClass} message-fade-in`;
+    messageDiv.innerHTML = `
+        <div class="message-header">
+            <span class="message-avatar">${message.avatar}</span>
+            <span>${message.senderName}</span>
+            <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${message.time}</span>
+        </div>
+        <div class="message-content">${message.content}</div>
+    `;
+    
+    chatMessagesContainer.appendChild(messageDiv);
+    smoothScrollToBottom(chatMessagesContainer);
+}
+
+// Smooth scroll to bottom of container
+function smoothScrollToBottom(container) {
+    container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+    });
 }
 
 // Chat form handling
 document.getElementById('chatForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+    await sendChatMessage();
+});
+
+// Handle Enter key for sending messages
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+    }
+});
+
+// Auto-resize textarea as user types
+document.getElementById('chatInput').addEventListener('input', (e) => {
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+});
+
+// Send chat message function
+async function sendChatMessage() {
     const chatInput = document.getElementById('chatInput');
     const chatRole = document.getElementById('chatRole');
+    const sendButton = document.querySelector('#chatForm button[type="submit"]');
     const content = chatInput.value.trim();
     
     if (!content) return;
+    
+    // Disable input during send
+    chatInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.textContent = 'Sending...';
     
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -224,14 +279,26 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     chatMessages.push(message);
     localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
     
-    renderChatMessages();
+    // Use append instead of full re-render for better performance
+    appendChatMessage(message);
+    
+    // Clear and reset input
     chatInput.value = '';
+    chatInput.style.height = 'auto';
+    
+    // Re-enable input
+    chatInput.disabled = false;
+    sendButton.disabled = false;
+    sendButton.textContent = 'Send';
+    
+    // Return focus to input
+    chatInput.focus();
     
     // If user sent a message, generate AI response
     if (chatRole.value === 'user' && roles.length > 0) {
         await generateAIResponse(content);
     }
-});
+}
 
 // Generate AI Response
 async function generateAIResponse(userMessage) {
@@ -241,7 +308,10 @@ async function generateAIResponse(userMessage) {
     try {
         // Select a random AI role to respond or use configured AI
         const aiRoles = roles.filter(r => r.aiInstructions);
-        if (aiRoles.length === 0) return;
+        if (aiRoles.length === 0) {
+            removeTypingIndicator();
+            return;
+        }
         
         // Randomly select an AI role to respond (or could be based on context)
         const respondingRole = aiRoles[Math.floor(Math.random() * aiRoles.length)];
@@ -253,9 +323,13 @@ async function generateAIResponse(userMessage) {
             // Call actual AI API
             aiResponse = await callAIAPI(userMessage, respondingRole);
         } else {
-            // Fallback to simulated response
+            // Fallback to simulated response with delay
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
             aiResponse = generateSimulatedResponse(userMessage, respondingRole);
         }
+        
+        // Remove typing indicator
+        removeTypingIndicator();
         
         // Add AI response to chat
         const now = new Date();
@@ -270,12 +344,9 @@ async function generateAIResponse(userMessage) {
             isAI: true
         };
         
-        // Remove typing indicator
-        removeTypingIndicator();
-        
         chatMessages.push(aiMessage);
         localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
-        renderChatMessages();
+        appendChatMessage(aiMessage);
         
         // Speak the response if voice is enabled
         if (aiConfig.voiceEnabled) {
@@ -285,6 +356,16 @@ async function generateAIResponse(userMessage) {
     } catch (error) {
         console.error('Error generating AI response:', error);
         removeTypingIndicator();
+        
+        // Show user-friendly error message
+        const errorMessage = {
+            sender: 'system',
+            senderName: 'System',
+            avatar: '⚠️',
+            content: 'Sorry, there was an error generating the AI response. Please try again.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        appendChatMessage(errorMessage);
     }
 }
 
@@ -409,7 +490,7 @@ function showTypingIndicator() {
         </div>
     `;
     chatMessagesContainer.appendChild(typingDiv);
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    smoothScrollToBottom(chatMessagesContainer);
 }
 
 // Remove typing indicator
