@@ -4,7 +4,12 @@
   "description": "AI-based Virtual Company that can be set up in minutes",
   "scripts": {
     "lint": "eslint *.js --fix",
-    "start": "python3 -m http.server 8000"
+    "start": "python3 -m http.server 8000",
+    "backend:install": "cd backend && npm install",
+    "backend:start": "cd backend && npm start",
+    "backend:dev": "cd backend && npm run dev",
+    "dev": "concurrently \"npm start\" \"npm run backend:dev\"",
+    "setup": "npm install && npm run backend:install"
   },
   "repository": {
     "type": "git",
@@ -23,6 +28,7 @@
   },
   "homepage": "https://github.com/inkognitroz/Virtual_Company#readme",
   "devDependencies": {
-    "eslint": "^8.50.0"
+    "eslint": "^8.50.0",
+    "concurrently": "^8.2.2"
   }
 }
