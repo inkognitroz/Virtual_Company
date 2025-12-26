@@ -35,6 +35,10 @@
                     <span class="icon">🤖</span>
                     <span>AI Integration</span>
                 </a>
+                <a href="#" class="nav-item" data-section="settings">
+                    <span class="icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
             </nav>
             
             <button id="logoutBtn" class="btn btn-secondary logout-btn">Logout</button>
@@ -238,6 +242,45 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section">
+                <div class="section-header">
+                    <h1>Settings & Data Management</h1>
+                </div>
+                
+                <div class="settings-content">
+                    <div class="settings-card">
+                        <h3>📤 Export Data</h3>
+                        <p>Download your roles, chat history, and settings as a backup.</p>
+                        <div class="export-options">
+                            <button class="btn btn-primary" id="exportAllBtn">Export All Data</button>
+                            <button class="btn btn-secondary" id="exportRolesBtn">Export Roles Only</button>
+                            <button class="btn btn-secondary" id="exportChatsBtn">Export Chats Only</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3>📥 Import Data</h3>
+                        <p>Restore your data from a previously exported file.</p>
+                        <div class="import-section">
+                            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                            <button class="btn btn-primary" id="importDataBtn">Import Data</button>
+                            <p class="import-note">Note: Importing will merge with existing data. Duplicate roles will be skipped.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3>🗑️ Clear Data</h3>
+                        <p>Remove all stored data from your browser.</p>
+                        <div class="clear-options">
+                            <button class="btn btn-danger" id="clearAllBtn">Clear All Data</button>
+                            <button class="btn btn-secondary" id="clearChatsBtn">Clear Chats Only</button>
+                        </div>
+                        <p class="warning-note">⚠️ Warning: This action cannot be undone. Please export your data first!</p>
                     </div>
                 </div>
             </section>

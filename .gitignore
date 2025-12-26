@@ -14,3 +14,11 @@ Thumbs.db
 # Temporary files
 *.tmp
 *~
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build artifacts
+dist/
+build/

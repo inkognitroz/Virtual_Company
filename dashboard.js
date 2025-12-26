@@ -368,22 +368,22 @@ async function callAIAPI(userMessage, role) {
 function generateSimulatedResponse(userMessage, role) {
     const responses = {
         'Project Manager': [
-            `Great point! Let's break this down into actionable tasks. I'll create a timeline and assign responsibilities.`,
-            `I agree. We should prioritize this and allocate resources accordingly. Let me schedule a follow-up meeting.`,
-            `That's an important consideration. I'll add it to our project roadmap and track the progress.`,
-            `Excellent suggestion! This aligns well with our current sprint goals. Let's implement it in the next iteration.`
+            'Great point! Let\'s break this down into actionable tasks. I\'ll create a timeline and assign responsibilities.',
+            'I agree. We should prioritize this and allocate resources accordingly. Let me schedule a follow-up meeting.',
+            'That\'s an important consideration. I\'ll add it to our project roadmap and track the progress.',
+            'Excellent suggestion! This aligns well with our current sprint goals. Let\'s implement it in the next iteration.'
         ],
         'Lead Developer': [
-            `From a technical perspective, we should consider scalability and maintainability here.`,
-            `I recommend we implement this using best practices and add proper test coverage.`,
-            `Good idea. We'll need to refactor some code, but it will improve our architecture significantly.`,
-            `Let's review the technical requirements and ensure we have the right dependencies in place.`
+            'From a technical perspective, we should consider scalability and maintainability here.',
+            'I recommend we implement this using best practices and add proper test coverage.',
+            'Good idea. We\'ll need to refactor some code, but it will improve our architecture significantly.',
+            'Let\'s review the technical requirements and ensure we have the right dependencies in place.'
         ],
         'AI Assistant': [
-            `I can help with that! Based on the context, here's what I suggest...`,
-            `Let me analyze this for you. The key considerations are...`,
-            `That's an interesting question. Here's my recommendation based on best practices...`,
-            `I've processed your request. Here are the main points to consider...`
+            'I can help with that! Based on the context, here\'s what I suggest...',
+            'Let me analyze this for you. The key considerations are...',
+            'That\'s an interesting question. Here\'s my recommendation based on best practices...',
+            'I\'ve processed your request. Here are the main points to consider...'
         ]
     };
     
@@ -467,42 +467,53 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 // ========== INITIALIZATION ==========
 
 // Initialize on page load
-renderRoles();
-updateChatRoleSelector();
-renderChatMessages();
-initializeVoiceRecognition();
-setupAIConfigHandlers();
-
-// Add some default roles if none exist
-if (roles.length === 0) {
-    const defaultRoles = [
-        {
-            id: 'role-1',
-            name: 'Project Manager',
-            avatar: '👨‍💼',
-            description: 'Oversees project planning, execution, and delivery',
-            aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
-        },
-        {
-            id: 'role-2',
-            name: 'Lead Developer',
-            avatar: '👩‍💻',
-            description: 'Technical lead responsible for code quality and architecture',
-            aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
-        },
-        {
-            id: 'role-3',
-            name: 'AI Assistant',
-            avatar: '🤖',
-            description: 'General purpose AI assistant for various tasks',
-            aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
-        }
-    ];
-    
-    roles = defaultRoles;
-    localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+function initializeApp() {
     renderRoles();
     updateChatRoleSelector();
+    renderChatMessages();
+    initializeVoiceRecognition();
+    setupAIConfigHandlers();
+    setupExportImportHandlers();
+    
+    // Add some default roles if none exist
+    if (roles.length === 0) {
+        const defaultRoles = [
+            {
+                id: 'role-1',
+                name: 'Project Manager',
+                avatar: '👨‍💼',
+                description: 'Oversees project planning, execution, and delivery',
+                aiInstructions: 'You are a professional Project Manager. Focus on planning, organizing tasks, managing timelines, and ensuring team coordination. Provide structured responses with clear action items and deadlines.'
+            },
+            {
+                id: 'role-2',
+                name: 'Lead Developer',
+                avatar: '👩‍💻',
+                description: 'Technical lead responsible for code quality and architecture',
+                aiInstructions: 'You are an experienced Lead Developer. Provide technical insights, code reviews, architectural decisions, and best practices. Focus on scalability, maintainability, and code quality.'
+            },
+            {
+                id: 'role-3',
+                name: 'AI Assistant',
+                avatar: '🤖',
+                description: 'General purpose AI assistant for various tasks',
+                aiInstructions: 'You are a helpful AI Assistant. Provide clear, concise, and accurate information. Be friendly and professional. Help with research, analysis, and problem-solving.'
+            }
+        ];
+        
+        roles = defaultRoles;
+        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        renderRoles();
+        updateChatRoleSelector();
+    }
+}
+
+// Run initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already ready
+    initializeApp();
 }
 
 // ========== VOICE CAPABILITIES ==========
@@ -652,5 +663,186 @@ function setupAIConfigHandlers() {
             aiConfig.voiceEnabled = e.target.checked;
             localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
         });
+    }
+}
+
+// ========== EXPORT/IMPORT FUNCTIONALITY ==========
+
+// Export all data
+function exportAllData() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        roles: roles,
+        chatMessages: chatMessages,
+        aiConfig: aiConfig
+    };
+    
+    downloadJSON(exportData, 'virtual-company-backup');
+}
+
+// Export roles only
+function exportRoles() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        roles: roles
+    };
+    
+    downloadJSON(exportData, 'virtual-company-roles');
+}
+
+// Export chats only
+function exportChats() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        chatMessages: chatMessages
+    };
+    
+    downloadJSON(exportData, 'virtual-company-chats');
+}
+
+// Helper function to download JSON
+function downloadJSON(data, filename) {
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Import data
+function importData(file) {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Validate the data
+            if (!importedData.version) {
+                alert('Invalid import file format.');
+                return;
+            }
+            
+            let importedCount = 0;
+            
+            // Import roles if present
+            if (importedData.roles && Array.isArray(importedData.roles)) {
+                const existingIds = roles.map(r => r.id);
+                const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
+                roles.push(...newRoles);
+                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+                importedCount += newRoles.length;
+                renderRoles();
+                updateChatRoleSelector();
+            }
+            
+            // Import chat messages if present
+            if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
+                chatMessages.push(...importedData.chatMessages);
+                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                renderChatMessages();
+            }
+            
+            // Import AI config if present
+            if (importedData.aiConfig) {
+                aiConfig = { ...aiConfig, ...importedData.aiConfig };
+                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            }
+            
+            alert(`Import successful! ${importedCount > 0 ? importedCount + ' new role(s) added. ' : ''}Data has been merged with existing data.`);
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Error importing file. Please make sure it\'s a valid Virtual Company export file.');
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+// Clear all data
+function clearAllData() {
+    if (confirm('Are you sure you want to clear ALL data? This action cannot be undone!\n\nThis will remove:\n- All roles\n- All chat messages\n- AI configuration\n\nPlease export your data first if you want to keep it.')) {
+        if (confirm('Final confirmation: This will permanently delete all your Virtual Company data. Continue?')) {
+            roles = [];
+            chatMessages = [];
+            aiConfig = {};
+            
+            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            
+            renderRoles();
+            updateChatRoleSelector();
+            renderChatMessages();
+            
+            alert('All data has been cleared.');
+        }
+    }
+}
+
+// Clear chats only
+function clearChats() {
+    if (confirm('Are you sure you want to clear all chat messages? This action cannot be undone!')) {
+        chatMessages = [];
+        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        renderChatMessages();
+        alert('Chat history has been cleared.');
+    }
+}
+
+// Setup export/import handlers
+function setupExportImportHandlers() {
+    // Export buttons
+    const exportAllBtn = document.getElementById('exportAllBtn');
+    if (exportAllBtn) {
+        exportAllBtn.addEventListener('click', exportAllData);
+    }
+    
+    const exportRolesBtn = document.getElementById('exportRolesBtn');
+    if (exportRolesBtn) {
+        exportRolesBtn.addEventListener('click', exportRoles);
+    }
+    
+    const exportChatsBtn = document.getElementById('exportChatsBtn');
+    if (exportChatsBtn) {
+        exportChatsBtn.addEventListener('click', exportChats);
+    }
+    
+    // Import button
+    const importDataBtn = document.getElementById('importDataBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    
+    if (importDataBtn && importFileInput) {
+        importDataBtn.addEventListener('click', () => {
+            importFileInput.click();
+        });
+        
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                importData(file);
+                e.target.value = ''; // Reset file input
+            }
+        });
+    }
+    
+    // Clear data buttons
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllData);
+    }
+    
+    const clearChatsBtn = document.getElementById('clearChatsBtn');
+    if (clearChatsBtn) {
+        clearChatsBtn.addEventListener('click', clearChats);
     }
 }
