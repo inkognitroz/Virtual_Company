@@ -35,11 +35,33 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Serve static files
-app.use(express.static('./', {
-    index: 'index.html',
-    extensions: ['html']
-}));
+// Serve static files - frontend HTML/CSS/JS
+// Explicitly serve only frontend files to avoid exposing backend code
+const serveStatic = express.static('./', {
+    dotfiles: 'deny',
+    index: false,
+    setHeaders: (res, path) => {
+        // Only allow specific frontend files
+        const allowedFiles = ['index.html', 'dashboard.html', 'styles.css', 
+                              'auth.js', 'dashboard.js', 'api-client.js', 'config.js'];
+        const fileName = path.split('/').pop();
+        
+        if (!allowedFiles.includes(fileName)) {
+            res.status(403);
+        }
+    }
+});
+
+app.use(serveStatic);
+
+// Explicit routes for HTML pages
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/dashboard.html', (req, res) => {
+    res.sendFile(__dirname + '/dashboard.html');
+});
 
 // Database connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/virtual-company';
