@@ -18,24 +18,24 @@
                 </div>
             </div>
             
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-section="roles">
+            <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+                <a href="#" class="nav-item active" data-section="roles" aria-label="Navigate to Roles & Team section">
                     <span class="icon">👥</span>
                     <span>Roles & Team</span>
                 </a>
-                <a href="#" class="nav-item" data-section="chat">
+                <a href="#" class="nav-item" data-section="chat" aria-label="Navigate to Group Chat section">
                     <span class="icon">💬</span>
                     <span>Group Chat</span>
                 </a>
-                <a href="#" class="nav-item" data-section="video">
+                <a href="#" class="nav-item" data-section="video" aria-label="Navigate to Video Calls section">
                     <span class="icon">📹</span>
                     <span>Video Calls</span>
                 </a>
-                <a href="#" class="nav-item" data-section="ai">
+                <a href="#" class="nav-item" data-section="ai" aria-label="Navigate to AI Integration section">
                     <span class="icon">🤖</span>
                     <span>AI Integration</span>
                 </a>
-                <a href="#" class="nav-item" data-section="settings">
+                <a href="#" class="nav-item" data-section="settings" aria-label="Navigate to Settings section">
                     <span class="icon">⚙️</span>
                     <span>Settings</span>
                 </a>
@@ -111,16 +111,16 @@
                     <div class="chat-input-container">
                         <div class="role-selector">
                             <label for="chatRole">Send as:</label>
-                            <select id="chatRole">
+                            <select id="chatRole" aria-label="Select role to send message as">
                                 <option value="user">Yourself</option>
                             </select>
                         </div>
                         <form id="chatForm">
                             <div class="chat-input-wrapper">
-                                <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
+                                <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3" aria-label="Message input"></textarea>
                                 <div class="chat-controls">
-                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()">🎤 Voice</button>
-                                    <button type="submit" class="btn btn-primary">Send</button>
+                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()" aria-label="Use voice input">🎤 Voice</button>
+                                    <button type="submit" class="btn btn-primary" aria-label="Send message">Send</button>
                                 </div>
                             </div>
                         </form>

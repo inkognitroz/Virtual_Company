@@ -1,7 +1,50 @@
 // Dashboard JavaScript
 
+// ========== UTILITY FUNCTIONS ==========
+
+// Safe localStorage wrapper with error handling
+function saveToLocalStorage(key, value) {
+    try {
+        const jsonString = JSON.stringify(value);
+        localStorage.setItem(key, jsonString);
+        return true;
+    } catch (error) {
+        if (error.name === 'QuotaExceededError') {
+            alert('Storage quota exceeded. Please export your data and clear old messages.');
+        } else {
+            console.error('Error saving to localStorage:', error);
+            alert('Failed to save data. Please try again.');
+        }
+        return false;
+    }
+}
+
+// Safe localStorage getter
+function getFromLocalStorage(key, defaultValue = null) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error('Error reading from localStorage:', error);
+        return defaultValue;
+    }
+}
+
+// Sanitize HTML to prevent XSS
+function sanitizeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Validate and sanitize text input
+function sanitizeInput(input, maxLength = 1000) {
+    if (!input || typeof input !== 'string') return '';
+    return sanitizeHTML(input.trim().substring(0, maxLength));
+}
+
 // Check if user is logged in
-const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
+const currentUser = getFromLocalStorage('virtualCompanyUser');
 if (!currentUser) {
     window.location.href = 'index.html';
 }
@@ -10,13 +53,13 @@ if (!currentUser) {
 document.getElementById('userName').textContent = currentUser.name || currentUser.username;
 
 // Initialize roles from localStorage
-let roles = JSON.parse(localStorage.getItem('virtualCompanyRoles') || '[]');
+let roles = getFromLocalStorage('virtualCompanyRoles', []);
 
 // Initialize chat messages
-let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages') || '[]');
+let chatMessages = getFromLocalStorage('virtualCompanyChatMessages', []);
 
 // AI Configuration
-let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
+let aiConfig = getFromLocalStorage('virtualCompanyAIConfig', {});
 
 // Voice recognition and synthesis
 let recognition = null;
@@ -75,16 +118,32 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
+    // Get and sanitize inputs
+    const roleName = sanitizeInput(document.getElementById('roleName').value, 100);
+    const roleAvatar = document.getElementById('roleAvatar').value;
+    const roleDescription = sanitizeInput(document.getElementById('roleDescription').value, 500);
+    const aiInstructions = sanitizeInput(document.getElementById('aiInstructions').value, 2000);
+    
+    // Validation
+    if (!roleName) {
+        alert('Please enter a role name.');
+        return;
+    }
+    
     const role = {
         id: Date.now().toString(),
-        name: document.getElementById('roleName').value,
-        avatar: document.getElementById('roleAvatar').value,
-        description: document.getElementById('roleDescription').value,
-        aiInstructions: document.getElementById('aiInstructions').value
+        name: roleName,
+        avatar: roleAvatar,
+        description: roleDescription,
+        aiInstructions: aiInstructions
     };
     
     roles.push(role);
-    localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+    if (!saveToLocalStorage('virtualCompanyRoles', roles)) {
+        // Rollback on save failure
+        roles.pop();
+        return;
+    }
     
     renderRoles();
     updateChatRoleSelector();
@@ -108,33 +167,40 @@ function renderRoles() {
         return;
     }
     
-    rolesGrid.innerHTML = roles.map(role => `
+    rolesGrid.innerHTML = roles.map(role => {
+        const safeName = sanitizeHTML(role.name);
+        const safeDescription = sanitizeHTML(role.description || 'No description provided');
+        const safeInstructions = sanitizeHTML(role.aiInstructions || '');
+        
+        return `
         <div class="role-card">
             <div class="role-card-header">
                 <div class="role-avatar">${role.avatar}</div>
                 <div>
-                    <h3>${role.name}</h3>
+                    <h3>${safeName}</h3>
                 </div>
             </div>
-            <p>${role.description || 'No description provided'}</p>
-            ${role.aiInstructions ? `
+            <p>${safeDescription}</p>
+            ${safeInstructions ? `
                 <div class="ai-instructions">
                     <strong>AI Instructions:</strong><br>
-                    ${role.aiInstructions}
+                    ${safeInstructions}
                 </div>
             ` : ''}
             <div class="role-actions">
                 <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Delete role
+// eslint-disable-next-line no-unused-vars
 function deleteRole(roleId) {
     if (confirm('Are you sure you want to delete this role?')) {
         roles = roles.filter(r => r.id !== roleId);
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        saveToLocalStorage('virtualCompanyRoles', roles);
         renderRoles();
         updateChatRoleSelector();
     }
@@ -168,14 +234,18 @@ function renderChatMessages() {
     
     chatMessages.forEach(msg => {
         const messageClass = msg.sender === 'user' ? 'user' : 'role';
+        const safeSenderName = sanitizeHTML(msg.senderName);
+        const safeContent = sanitizeHTML(msg.content);
+        const safeTime = sanitizeHTML(msg.time);
+        
         messagesHTML += `
             <div class="message ${messageClass}">
                 <div class="message-header">
                     <span class="message-avatar">${msg.avatar}</span>
-                    <span>${msg.senderName}</span>
-                    <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
+                    <span>${safeSenderName}</span>
+                    <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${safeTime}</span>
                 </div>
-                <div class="message-content">${msg.content}</div>
+                <div class="message-content">${safeContent}</div>
             </div>
         `;
     });
@@ -192,7 +262,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     
     const chatInput = document.getElementById('chatInput');
     const chatRole = document.getElementById('chatRole');
-    const content = chatInput.value.trim();
+    const content = sanitizeInput(chatInput.value, 5000);
     
     if (!content) return;
     
@@ -211,6 +281,8 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
         };
     } else {
         const role = roles.find(r => r.id === chatRole.value);
+        if (!role) return;
+        
         message = {
             sender: 'role',
             senderName: role.name,
@@ -222,7 +294,11 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     }
     
     chatMessages.push(message);
-    localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+    if (!saveToLocalStorage('virtualCompanyChatMessages', chatMessages)) {
+        // Rollback on save failure
+        chatMessages.pop();
+        return;
+    }
     
     renderChatMessages();
     chatInput.value = '';
@@ -274,7 +350,7 @@ async function generateAIResponse(userMessage) {
         removeTypingIndicator();
         
         chatMessages.push(aiMessage);
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        saveToLocalStorage('virtualCompanyChatMessages', chatMessages);
         renderChatMessages();
         
         // Speak the response if voice is enabled
@@ -502,7 +578,7 @@ function initializeApp() {
         ];
         
         roles = defaultRoles;
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        saveToLocalStorage('virtualCompanyRoles', roles);
         renderRoles();
         updateChatRoleSelector();
     }
@@ -563,6 +639,7 @@ function speakText(text) {
 }
 
 // Toggle voice input
+// eslint-disable-next-line no-unused-vars
 function toggleVoiceInput() {
     if (!recognition) {
         alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
@@ -608,7 +685,7 @@ function setupAIConfigHandlers() {
             if (apiKey) {
                 aiConfig.provider = 'openai';
                 aiConfig.apiKey = apiKey;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
                 alert('OpenAI connected successfully! AI responses will now use GPT-3.5.');
                 apiKeyInput.value = '';
             } else {
@@ -627,7 +704,7 @@ function setupAIConfigHandlers() {
             if (apiKey) {
                 aiConfig.provider = 'claude';
                 aiConfig.apiKey = apiKey;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
                 alert('Claude connected successfully! AI responses will now use Claude.');
                 apiKeyInput.value = '';
             } else {
@@ -646,7 +723,7 @@ function setupAIConfigHandlers() {
             if (endpoint) {
                 aiConfig.provider = 'custom';
                 aiConfig.endpoint = endpoint;
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
                 alert('Custom API connected successfully!');
                 endpointInput.value = '';
             } else {
@@ -661,7 +738,7 @@ function setupAIConfigHandlers() {
         voiceToggle.checked = aiConfig.voiceEnabled || false;
         voiceToggle.addEventListener('change', (e) => {
             aiConfig.voiceEnabled = e.target.checked;
-            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
         });
     }
 }
@@ -738,7 +815,7 @@ function importData(file) {
                 const existingIds = roles.map(r => r.id);
                 const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
                 roles.push(...newRoles);
-                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+                saveToLocalStorage('virtualCompanyRoles', roles);
                 importedCount += newRoles.length;
                 renderRoles();
                 updateChatRoleSelector();
@@ -747,14 +824,14 @@ function importData(file) {
             // Import chat messages if present
             if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
                 chatMessages.push(...importedData.chatMessages);
-                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                saveToLocalStorage('virtualCompanyChatMessages', chatMessages);
                 renderChatMessages();
             }
             
             // Import AI config if present
             if (importedData.aiConfig) {
                 aiConfig = { ...aiConfig, ...importedData.aiConfig };
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
             }
             
             alert(`Import successful! ${importedCount > 0 ? importedCount + ' new role(s) added. ' : ''}Data has been merged with existing data.`);
@@ -776,9 +853,9 @@ function clearAllData() {
             chatMessages = [];
             aiConfig = {};
             
-            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
-            localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+            saveToLocalStorage('virtualCompanyRoles', roles);
+            saveToLocalStorage('virtualCompanyChatMessages', chatMessages);
+            saveToLocalStorage('virtualCompanyAIConfig', aiConfig);
             
             renderRoles();
             updateChatRoleSelector();
@@ -793,7 +870,7 @@ function clearAllData() {
 function clearChats() {
     if (confirm('Are you sure you want to clear all chat messages? This action cannot be undone!')) {
         chatMessages = [];
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        saveToLocalStorage('virtualCompanyChatMessages', chatMessages);
         renderChatMessages();
         alert('Chat history has been cleared.');
     }
