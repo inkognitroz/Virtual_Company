@@ -7,7 +7,12 @@ const auth = require('../middleware/auth');
 const aiRequestValidation = [
     body('message').trim().notEmpty().isLength({ max: 5000 }),
     body('provider').optional().isIn(['openai', 'claude', 'custom']),
-    body('roleInstructions').optional().trim()
+    body('roleInstructions').optional().trim(),
+    body('endpoint')
+        .if(body('provider').equals('custom'))
+        .notEmpty()
+        .isURL({ protocols: ['http', 'https'], require_protocol: true })
+        .withMessage('Valid HTTPS/HTTP URL required for custom endpoint')
 ];
 
 // Proxy AI request (to hide API keys from frontend)
@@ -119,6 +124,28 @@ router.post('/chat', auth, aiRequestValidation, async (req, res) => {
             }
             
         } else if (provider === 'custom' && endpoint) {
+            // Validate endpoint to prevent SSRF
+            const url = new URL(endpoint);
+            
+            // Block internal/private networks
+            const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '169.254.169.254'];
+            const isBlockedHost = blockedHosts.some(host => 
+                url.hostname === host || url.hostname.endsWith('.local')
+            );
+            
+            if (isBlockedHost) {
+                return res.status(400).json({
+                    error: { message: 'Custom endpoint cannot point to internal networks' }
+                });
+            }
+            
+            // Only allow HTTP/HTTPS
+            if (!['http:', 'https:'].includes(url.protocol)) {
+                return res.status(400).json({
+                    error: { message: 'Only HTTP/HTTPS protocols are allowed' }
+                });
+            }
+            
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST',

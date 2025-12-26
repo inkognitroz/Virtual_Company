@@ -52,7 +52,7 @@ router.post('/register', registerValidation, async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { userId: user._id },
-            process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
         
@@ -101,7 +101,7 @@ router.post('/login', loginValidation, async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { userId: user._id },
-            process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+            process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
         

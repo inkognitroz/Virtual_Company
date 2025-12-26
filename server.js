@@ -7,6 +7,18 @@ require('dotenv').config();
 
 const app = express();
 
+// Validate required environment variables
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+    console.error('❌ FATAL ERROR: JWT_SECRET is not set in production!');
+    console.error('Please set JWT_SECRET environment variable to a secure random string.');
+    process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+    console.warn('⚠ WARNING: JWT_SECRET not set. Using fallback (NOT FOR PRODUCTION!)');
+    process.env.JWT_SECRET = 'dev-secret-change-in-production-' + Date.now();
+}
+
 // Middleware
 app.use(helmet());
 app.use(cors({

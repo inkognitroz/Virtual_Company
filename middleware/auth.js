@@ -11,7 +11,7 @@ const auth = async (req, res, next) => {
         }
         
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
         // Find user
         const user = await User.findById(decoded.userId);
