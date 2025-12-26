@@ -727,7 +727,9 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => {
-            document.body.removeChild(toast);
+            if (toast.parentNode) {
+                document.body.removeChild(toast);
+            }
         }, 300);
     }, 3000);
 }

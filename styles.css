@@ -972,13 +972,13 @@ html {
 }
 
 /* Better Focus States */
-*:focus {
+*:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
 
-button:focus,
-.btn:focus {
+button:focus-visible,
+.btn:focus-visible {
     outline-offset: 3px;
 }
 
