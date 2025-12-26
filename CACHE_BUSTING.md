@@ -12,16 +12,17 @@ We've implemented **cache busting** using version query parameters on all static
 
 1. **Added Cache Control Meta Tags**
    - Added meta tags to both `index.html` and `dashboard.html` to discourage aggressive caching
-   - These tags help but may not work in all browsers/scenarios
+   - Note: These tags have limited effectiveness in modern browsers and mainly affect HTML caching
+   - For GitHub Pages (static hosting), we cannot set HTTP headers server-side
 
-2. **Version Query Parameters**
+2. **Version Query Parameters** (Primary Solution)
    - All CSS and JavaScript references now include a version parameter
    - Example: `styles.css?v=1.0.1` instead of `styles.css`
    - When the version changes, browsers treat it as a different file and fetch the new version
 
 ### Current Version
 
-Current asset version: **v1.0.1**
+Current asset version: **v1.0.1** *(Update this when you bump the version)*
 
 ### When to Update the Version
 
