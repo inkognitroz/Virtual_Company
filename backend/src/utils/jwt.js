@@ -12,6 +12,10 @@ const verifyToken = (token) => {
     try {
         return jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
+        // Log invalid tokens in development for debugging
+        if (process.env.NODE_ENV === 'development') {
+            console.error('JWT verification failed:', error.message);
+        }
         return null;
     }
 };

@@ -9,7 +9,7 @@ const validate = (req, res, next) => {
             success: false,
             message: 'Validation failed',
             errors: errors.array().map(err => ({
-                field: err.path,
+                field: err.param || err.path || 'unknown',
                 message: err.msg
             }))
         });

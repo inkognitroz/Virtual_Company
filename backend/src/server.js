@@ -29,8 +29,8 @@ app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    windowMs: Math.min(Math.max(parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, 60000), 24 * 60 * 60 * 1000), // Between 1 min and 24 hours
+    max: Math.min(Math.max(parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, 10), 10000), // Between 10 and 10000
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use('/api/', limiter);
