@@ -18,10 +18,17 @@ let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages')
 // AI Configuration
 let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
 
+// Meeting History
+let meetingHistory = JSON.parse(localStorage.getItem('virtualCompanyMeetingHistory') || '[]');
+
 // Voice recognition and synthesis
 let recognition = null;
 let synthesis = window.speechSynthesis;
 let isListening = false;
+
+// Edit mode flag
+let isEditMode = false;
+let currentEditRoleId = null;
 
 // Navigation handling
 const navItems = document.querySelectorAll('.nav-item');
@@ -75,15 +82,38 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const role = {
-        id: Date.now().toString(),
-        name: document.getElementById('roleName').value,
-        avatar: document.getElementById('roleAvatar').value,
-        description: document.getElementById('roleDescription').value,
-        aiInstructions: document.getElementById('aiInstructions').value
-    };
+    const roleId = document.getElementById('editRoleId').value;
+    const roleName = document.getElementById('roleName').value;
+    const roleAvatar = document.getElementById('roleAvatar').value;
+    const roleDescription = document.getElementById('roleDescription').value;
+    const aiInstructions = document.getElementById('aiInstructions').value;
     
-    roles.push(role);
+    if (isEditMode && roleId) {
+        // Edit existing role
+        const roleIndex = roles.findIndex(r => r.id === roleId);
+        if (roleIndex !== -1) {
+            roles[roleIndex] = {
+                id: roleId,
+                name: roleName,
+                avatar: roleAvatar,
+                description: roleDescription,
+                aiInstructions: aiInstructions
+            };
+            showToast('Role updated successfully!', 'success');
+        }
+    } else {
+        // Add new role
+        const role = {
+            id: Date.now().toString(),
+            name: roleName,
+            avatar: roleAvatar,
+            description: roleDescription,
+            aiInstructions: aiInstructions
+        };
+        roles.push(role);
+        showToast('Role added successfully!', 'success');
+    }
+    
     localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
     
     renderRoles();
@@ -91,6 +121,11 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     
     // Reset form and close modal
     document.getElementById('addRoleForm').reset();
+    document.getElementById('editRoleId').value = '';
+    isEditMode = false;
+    currentEditRoleId = null;
+    document.getElementById('roleModalTitle').textContent = 'Add New Role';
+    document.getElementById('roleSubmitBtn').textContent = 'Add Role';
     addRoleModal.style.display = 'none';
 });
 
@@ -109,7 +144,7 @@ function renderRoles() {
     }
     
     rolesGrid.innerHTML = roles.map(role => `
-        <div class="role-card">
+        <div class="role-card fade-in">
             <div class="role-card-header">
                 <div class="role-avatar">${role.avatar}</div>
                 <div>
@@ -124,10 +159,31 @@ function renderRoles() {
                 </div>
             ` : ''}
             <div class="role-actions">
+                <button class="btn btn-secondary btn-small" onclick="editRole('${role.id}')">Edit</button>
                 <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
             </div>
         </div>
     `).join('');
+}
+
+// Edit role
+function editRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    isEditMode = true;
+    currentEditRoleId = roleId;
+    
+    document.getElementById('editRoleId').value = role.id;
+    document.getElementById('roleName').value = role.name;
+    document.getElementById('roleAvatar').value = role.avatar;
+    document.getElementById('roleDescription').value = role.description;
+    document.getElementById('aiInstructions').value = role.aiInstructions;
+    
+    document.getElementById('roleModalTitle').textContent = 'Edit Role';
+    document.getElementById('roleSubmitBtn').textContent = 'Update Role';
+    
+    addRoleModal.style.display = 'block';
 }
 
 // Delete role
@@ -426,6 +482,7 @@ function removeTypingIndicator() {
 document.getElementById('joinMeetBtn').addEventListener('click', () => {
     const meetLink = document.getElementById('meetLink').value.trim();
     if (meetLink) {
+        saveMeetingToHistory('Google Meet', meetLink);
         window.open(meetLink, '_blank');
     } else {
         alert('Please enter a Google Meet link');
@@ -440,6 +497,7 @@ document.getElementById('createMeetBtn').addEventListener('click', () => {
 document.getElementById('joinTeamsBtn').addEventListener('click', () => {
     const teamsLink = document.getElementById('teamsLink').value.trim();
     if (teamsLink) {
+        saveMeetingToHistory('Microsoft Teams', teamsLink);
         window.open(teamsLink, '_blank');
     } else {
         alert('Please enter a Teams meeting link');
@@ -463,6 +521,216 @@ document.getElementById('joinWhatsAppBtn').addEventListener('click', () => {
 document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
     window.open('https://web.whatsapp.com', '_blank');
 });
+
+// ========== ZOOM INTEGRATION ==========
+
+// Zoom
+document.getElementById('joinZoomBtn').addEventListener('click', () => {
+    const zoomLink = document.getElementById('zoomLink').value.trim();
+    if (zoomLink) {
+        saveMeetingToHistory('Zoom', zoomLink);
+        window.open(zoomLink, '_blank');
+    } else {
+        alert('Please enter a Zoom meeting link or ID');
+    }
+});
+
+document.getElementById('createZoomBtn').addEventListener('click', () => {
+    window.open('https://zoom.us/start/videomeeting', '_blank');
+});
+
+// Save meeting to history
+function saveMeetingToHistory(platform, link) {
+    const meeting = {
+        id: Date.now().toString(),
+        platform: platform,
+        link: link,
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    
+    meetingHistory.unshift(meeting);
+    
+    // Keep only last 20 meetings
+    if (meetingHistory.length > 20) {
+        meetingHistory = meetingHistory.slice(0, 20);
+    }
+    
+    localStorage.setItem('virtualCompanyMeetingHistory', JSON.stringify(meetingHistory));
+}
+
+// View meeting history
+document.getElementById('viewMeetingHistoryBtn').addEventListener('click', () => {
+    document.getElementById('meetingHistoryModal').style.display = 'block';
+    renderMeetingHistory();
+});
+
+function closeMeetingHistory() {
+    document.getElementById('meetingHistoryModal').style.display = 'none';
+}
+
+function renderMeetingHistory() {
+    const historyList = document.getElementById('meetingHistoryList');
+    
+    if (meetingHistory.length === 0) {
+        historyList.innerHTML = '<p style="text-align: center; color: var(--gray-text); padding: 20px;">No meeting history yet.</p>';
+        return;
+    }
+    
+    historyList.innerHTML = meetingHistory.map(meeting => `
+        <div class="meeting-history-item">
+            <div class="meeting-info">
+                <h4>${meeting.platform} Meeting</h4>
+                <p>${meeting.date} at ${meeting.time}</p>
+                <p style="font-size: 0.8em; margin-top: 5px;">${meeting.link}</p>
+            </div>
+            <div class="meeting-actions">
+                <button class="btn btn-primary btn-small" onclick="rejoinMeeting('${meeting.link}')">Rejoin</button>
+                <button class="btn btn-secondary btn-small" onclick="deleteMeeting('${meeting.id}')">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function rejoinMeeting(link) {
+    window.open(link, '_blank');
+}
+
+function deleteMeeting(id) {
+    meetingHistory = meetingHistory.filter(m => m.id !== id);
+    localStorage.setItem('virtualCompanyMeetingHistory', JSON.stringify(meetingHistory));
+    renderMeetingHistory();
+}
+
+// ========== CHAT ENHANCEMENTS ==========
+
+// Export chat
+document.getElementById('exportChatBtn').addEventListener('click', () => {
+    const chatData = JSON.stringify(chatMessages, null, 2);
+    const blob = new Blob([chatData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `virtual-company-chat-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Chat exported successfully!', 'success');
+});
+
+// Clear chat
+document.getElementById('clearChatBtn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear all chat messages? This cannot be undone.')) {
+        chatMessages = [];
+        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        renderChatMessages();
+        showToast('Chat cleared successfully!', 'info');
+    }
+});
+
+// Search chat (basic implementation)
+document.getElementById('searchChatBtn').addEventListener('click', () => {
+    const searchTerm = prompt('Enter search term:');
+    if (searchTerm) {
+        const results = chatMessages.filter(msg => 
+            msg.content.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        if (results.length > 0) {
+            alert(`Found ${results.length} message(s) containing "${searchTerm}"`);
+        } else {
+            alert(`No messages found containing "${searchTerm}"`);
+        }
+    }
+});
+
+// Emoji picker
+function toggleEmojiPicker() {
+    const emojiPicker = document.getElementById('emojiPicker');
+    if (emojiPicker.style.display === 'none' || !emojiPicker.style.display) {
+        emojiPicker.style.display = 'block';
+        initializeEmojiPicker();
+    } else {
+        emojiPicker.style.display = 'none';
+    }
+}
+
+function initializeEmojiPicker() {
+    const emojiGrid = document.getElementById('emojiGrid');
+    const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👏', '🙌', '👐', '🤝', '🙏', '✨', '💡', '💯', '🔥', '⭐', '🎉', '🎊', '🎈', '🎁', '🏆', '🥇', '🥈', '🥉', '⚡', '💪', '🧠', '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍', '🤎'];
+    
+    emojiGrid.innerHTML = emojis.map(emoji => 
+        `<span onclick="insertEmoji('${emoji}')">${emoji}</span>`
+    ).join('');
+}
+
+function insertEmoji(emoji) {
+    const chatInput = document.getElementById('chatInput');
+    chatInput.value += emoji;
+    chatInput.focus();
+}
+
+// Export roles
+document.getElementById('exportRolesBtn').addEventListener('click', () => {
+    const rolesData = JSON.stringify(roles, null, 2);
+    const blob = new Blob([rolesData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `virtual-company-roles-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Roles exported successfully!', 'success');
+});
+
+// Import roles
+document.getElementById('importRolesBtn').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedRoles = JSON.parse(event.target.result);
+                    if (Array.isArray(importedRoles)) {
+                        roles = importedRoles;
+                        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+                        renderRoles();
+                        updateChatRoleSelector();
+                        showToast('Roles imported successfully!', 'success');
+                    } else {
+                        showToast('Invalid roles file format', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error importing roles: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+});
+
+// Toast notifications
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
 
 // ========== INITIALIZATION ==========
 

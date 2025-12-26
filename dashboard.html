@@ -46,7 +46,11 @@
             <section id="roles-section" class="content-section active">
                 <div class="section-header">
                     <h1>Roles & Team Management</h1>
-                    <button class="btn btn-primary" id="addRoleBtn">+ Add Role</button>
+                    <div>
+                        <button class="btn btn-secondary" id="importRolesBtn">📥 Import</button>
+                        <button class="btn btn-secondary" id="exportRolesBtn">📤 Export</button>
+                        <button class="btn btn-primary" id="addRoleBtn">+ Add Role</button>
+                    </div>
                 </div>
                 
                 <div class="roles-grid" id="rolesGrid">
@@ -57,8 +61,9 @@
                 <div id="addRoleModal" class="modal">
                     <div class="modal-content">
                         <span class="close">&times;</span>
-                        <h2>Add New Role</h2>
+                        <h2 id="roleModalTitle">Add New Role</h2>
                         <form id="addRoleForm">
+                            <input type="hidden" id="editRoleId">
                             <div class="form-group">
                                 <label for="roleName">Role Name</label>
                                 <input type="text" id="roleName" required placeholder="e.g., Project Manager">
@@ -75,6 +80,11 @@
                                     <option value="👨‍💰">👨‍💰 Finance</option>
                                     <option value="👩‍🔧">👩‍🔧 Support</option>
                                     <option value="🤖">🤖 AI Assistant</option>
+                                    <option value="👔">👔 Executive</option>
+                                    <option value="📊">📊 Analyst</option>
+                                    <option value="🎯">🎯 Sales</option>
+                                    <option value="📢">📢 Marketing</option>
+                                    <option value="🔧">🔧 Engineer</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -85,7 +95,7 @@
                                 <label for="aiInstructions">AI Model Instructions</label>
                                 <textarea id="aiInstructions" rows="4" placeholder="Instructions for LLM to understand this role's behavior and responsibilities..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">Add Role</button>
+                            <button type="submit" class="btn btn-primary" id="roleSubmitBtn">Add Role</button>
                         </form>
                     </div>
                 </div>
@@ -95,6 +105,11 @@
             <section id="chat-section" class="content-section">
                 <div class="section-header">
                     <h1>Group Chat</h1>
+                    <div class="chat-header-actions">
+                        <button class="btn btn-secondary btn-small" id="searchChatBtn">🔍 Search</button>
+                        <button class="btn btn-secondary btn-small" id="exportChatBtn">📥 Export</button>
+                        <button class="btn btn-secondary btn-small" id="clearChatBtn">🗑️ Clear</button>
+                    </div>
                 </div>
                 
                 <div class="chat-container">
@@ -116,10 +131,14 @@
                                 <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
                                 <div class="chat-controls">
                                     <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()">🎤 Voice</button>
+                                    <button type="button" class="btn btn-secondary" id="emojiBtn" onclick="toggleEmojiPicker()">😊 Emoji</button>
                                     <button type="submit" class="btn btn-primary">Send</button>
                                 </div>
                             </div>
                         </form>
+                        <div id="emojiPicker" class="emoji-picker" style="display: none;">
+                            <div class="emoji-grid" id="emojiGrid"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -128,6 +147,7 @@
             <section id="video-section" class="content-section">
                 <div class="section-header">
                     <h1>Video Call Integration</h1>
+                    <button class="btn btn-secondary" id="viewMeetingHistoryBtn">📋 Meeting History</button>
                 </div>
                 
                 <div class="video-integrations">
@@ -140,6 +160,23 @@
                             <button class="btn btn-primary" id="joinMeetBtn">Join Meeting</button>
                             <button class="btn btn-secondary" id="createMeetBtn">Create New</button>
                         </div>
+                        <div class="integration-features">
+                            <small>✓ Screen sharing • ✓ Recording • ✓ Live captions</small>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card">
+                        <div class="integration-icon">📱</div>
+                        <h3>Zoom</h3>
+                        <p>Join or create Zoom meetings</p>
+                        <input type="text" id="zoomLink" placeholder="Paste Zoom meeting link or ID..." class="integration-input">
+                        <div class="integration-actions">
+                            <button class="btn btn-primary" id="joinZoomBtn">Join Meeting</button>
+                            <button class="btn btn-secondary" id="createZoomBtn">Create New</button>
+                        </div>
+                        <div class="integration-features">
+                            <small>✓ Breakout rooms • ✓ Virtual backgrounds • ✓ HD video</small>
+                        </div>
                     </div>
                     
                     <div class="integration-card">
@@ -151,6 +188,9 @@
                             <button class="btn btn-primary" id="joinTeamsBtn">Join Meeting</button>
                             <button class="btn btn-secondary" id="createTeamsBtn">Create New</button>
                         </div>
+                        <div class="integration-features">
+                            <small>✓ Office integration • ✓ Chat • ✓ Collaboration</small>
+                        </div>
                     </div>
                     
                     <div class="integration-card">
@@ -161,6 +201,20 @@
                         <div class="integration-actions">
                             <button class="btn btn-primary" id="joinWhatsAppBtn">Join Group</button>
                             <button class="btn btn-secondary" id="createWhatsAppBtn">Create Group</button>
+                        </div>
+                        <div class="integration-features">
+                            <small>✓ Voice calls • ✓ Group messaging • ✓ End-to-end encryption</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Meeting History Modal -->
+                <div id="meetingHistoryModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeMeetingHistory()">&times;</span>
+                        <h2>Meeting History</h2>
+                        <div id="meetingHistoryList" class="meeting-history-list">
+                            <!-- Meeting history will be populated here -->
                         </div>
                     </div>
                 </div>
