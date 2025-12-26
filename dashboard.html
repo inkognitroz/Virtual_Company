@@ -23,6 +23,10 @@
                     <span class="icon">👥</span>
                     <span>Roles & Team</span>
                 </a>
+                <a href="#" class="nav-item" data-section="projects">
+                    <span class="icon">📋</span>
+                    <span>Projects & Workflows</span>
+                </a>
                 <a href="#" class="nav-item" data-section="chat">
                     <span class="icon">💬</span>
                     <span>Group Chat</span>
@@ -85,8 +89,70 @@
                                 <label for="aiInstructions">AI Model Instructions</label>
                                 <textarea id="aiInstructions" rows="4" placeholder="Instructions for LLM to understand this role's behavior and responsibilities..."></textarea>
                             </div>
+                            <div class="form-group">
+                                <label for="roleCapabilities">Capabilities (comma-separated)</label>
+                                <input type="text" id="roleCapabilities" placeholder="e.g., write_code, review_code, debug">
+                            </div>
                             <button type="submit" class="btn btn-primary">Add Role</button>
                         </form>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Projects & Workflows Section -->
+            <section id="projects-section" class="content-section">
+                <div class="section-header">
+                    <h1>Projects & Workflows</h1>
+                    <button class="btn btn-primary" id="addProjectBtn">+ New Project</button>
+                </div>
+                
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Projects will be dynamically added here -->
+                </div>
+                
+                <!-- Add Project Modal -->
+                <div id="addProjectModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" id="closeProjectModal">&times;</span>
+                        <h2>Create New Project</h2>
+                        <form id="addProjectForm">
+                            <div class="form-group">
+                                <label for="projectName">Project Name</label>
+                                <input type="text" id="projectName" required placeholder="e.g., Build E-commerce Platform">
+                            </div>
+                            <div class="form-group">
+                                <label for="projectDescription">Description</label>
+                                <textarea id="projectDescription" rows="3" placeholder="Brief project description..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="workflowType">Workflow Type</label>
+                                <select id="workflowType" required>
+                                    <option value="">Select a workflow...</option>
+                                    <option value="software-dev">Software Development</option>
+                                    <option value="research">Research & Analysis</option>
+                                    <option value="content-creation">Content Creation</option>
+                                    <option value="data-analysis">Data Analysis</option>
+                                    <option value="custom">Custom Workflow</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignedRoles">Assign Roles</label>
+                                <div id="roleCheckboxes" class="checkbox-group">
+                                    <!-- Dynamically populated with available roles -->
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create Project</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Project Detail Modal -->
+                <div id="projectDetailModal" class="modal">
+                    <div class="modal-content modal-large">
+                        <span class="close" id="closeDetailModal">&times;</span>
+                        <div id="projectDetailContent">
+                            <!-- Project details will be loaded here -->
+                        </div>
                     </div>
                 </div>
             </section>
