@@ -166,9 +166,9 @@ function renderChatMessages() {
         </div>
     `;
     
-    chatMessages.forEach(msg => {
+    chatMessages.forEach((msg, index) => {
         const messageClass = msg.sender === 'user' ? 'user' : (msg.isAI || msg.sender === 'ai' ? 'ai' : 'role');
-        const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
+        const messageId = 'msg-' + index;
         messagesHTML += `
             <div class="message ${messageClass}">
                 <div class="message-wrapper">
@@ -216,14 +216,46 @@ function copyMessage(messageId) {
     const chatMessagesContainer = document.getElementById('chatMessages');
     const content = chatMessagesContainer.dataset[messageId];
     
-    if (content) {
+    if (!content) return;
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(content).then(() => {
-            // Show a temporary notification
             showNotification('Message copied to clipboard!');
         }).catch(err => {
             console.error('Failed to copy message:', err);
+            // Fallback to older method
+            fallbackCopyToClipboard(content);
         });
+    } else {
+        // Use fallback for non-HTTPS or unsupported browsers
+        fallbackCopyToClipboard(content);
     }
+}
+
+// Fallback copy method for older browsers or non-HTTPS
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showNotification('Message copied to clipboard!');
+        } else {
+            console.error('Fallback copy failed');
+        }
+    } catch (err) {
+        console.error('Fallback copy error:', err);
+    }
+    
+    document.body.removeChild(textArea);
 }
 
 // Show temporary notification
