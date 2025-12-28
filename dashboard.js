@@ -1,4 +1,5 @@
 // Dashboard JavaScript
+/* global API */
 
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
@@ -120,20 +121,20 @@ function renderRoles() {
     rolesGrid.innerHTML = roles.map(role => `
         <div class="role-card">
             <div class="role-card-header">
-                <div class="role-avatar">${role.avatar}</div>
+                <div class="role-avatar">${escapeHtml(role.avatar)}</div>
                 <div>
-                    <h3>${role.name}</h3>
+                    <h3>${escapeHtml(role.name)}</h3>
                 </div>
             </div>
-            <p>${role.description || 'No description provided'}</p>
+            <p>${escapeHtml(role.description || 'No description provided')}</p>
             ${role.aiInstructions ? `
                 <div class="ai-instructions">
                     <strong>AI Instructions:</strong><br>
-                    ${role.aiInstructions}
+                    ${escapeHtml(role.aiInstructions)}
                 </div>
             ` : ''}
             <div class="role-actions">
-                <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
+                <button class="btn btn-secondary btn-small" onclick="deleteRole('${escapeHtml(role.id)}')">Delete</button>
             </div>
         </div>
     `).join('');
@@ -152,6 +153,9 @@ async function deleteRole(roleId) {
         }
     }
 }
+
+// Make deleteRole accessible globally for onclick handlers
+window.deleteRole = deleteRole;
 
 // ========== CHAT FUNCTIONALITY ==========
 
@@ -186,12 +190,12 @@ function renderChatMessages() {
             <div class="message ${messageClass}">
                 <div class="message-wrapper">
                     <div class="message-avatar-container">
-                        ${msg.avatar}
+                        ${escapeHtml(msg.avatar)}
                     </div>
                     <div class="message-bubble">
                         <div class="message-header">
-                            <span class="message-sender-name">${msg.senderName}</span>
-                            <span class="message-time">${msg.time}</span>
+                            <span class="message-sender-name">${escapeHtml(msg.senderName)}</span>
+                            <span class="message-time">${escapeHtml(msg.time)}</span>
                         </div>
                         <div class="message-content">${escapeHtml(msg.content)}</div>
                     </div>
@@ -248,6 +252,9 @@ function copyMessage(messageId) {
         fallbackCopyToClipboard(content);
     }
 }
+
+// Make copyMessage accessible globally for onclick handlers
+window.copyMessage = copyMessage;
 
 // Fallback copy method for older browsers or non-HTTPS
 // Note: document.execCommand('copy') is deprecated but needed for legacy browser support
@@ -801,6 +808,9 @@ function toggleVoiceInput() {
     updateVoiceButton();
 }
 
+// Make toggleVoiceInput accessible globally for onclick handlers
+window.toggleVoiceInput = toggleVoiceInput;
+
 // Update voice button appearance
 function updateVoiceButton() {
     const voiceBtn = document.getElementById('voiceInputBtn');
@@ -955,10 +965,10 @@ function downloadJSON(data, filename) {
 }
 
 // Import data
-function importData(file) {
+async function importData(file) {
     const reader = new FileReader();
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const importedData = JSON.parse(e.target.result);
             
@@ -974,24 +984,43 @@ function importData(file) {
             if (importedData.roles && Array.isArray(importedData.roles)) {
                 const existingIds = roles.map(r => r.id);
                 const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
-                roles.push(...newRoles);
-                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-                importedCount += newRoles.length;
+                
+                // Create roles via API
+                for (const role of newRoles) {
+                    try {
+                        await API.roles.create(role);
+                        roles.push(role);
+                        importedCount++;
+                    } catch (error) {
+                        console.error('Error importing role:', role.name, error);
+                    }
+                }
+                
                 renderRoles();
                 updateChatRoleSelector();
             }
             
             // Import chat messages if present
             if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
-                chatMessages.push(...importedData.chatMessages);
-                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                for (const message of importedData.chatMessages) {
+                    try {
+                        await API.messages.create(message);
+                        chatMessages.push(message);
+                    } catch (error) {
+                        console.error('Error importing message:', error);
+                    }
+                }
                 renderChatMessages();
             }
             
             // Import AI config if present
             if (importedData.aiConfig) {
                 aiConfig = { ...aiConfig, ...importedData.aiConfig };
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                try {
+                    await API.aiConfig.update(aiConfig);
+                } catch (error) {
+                    console.error('Error importing AI config:', error);
+                }
             }
             
             alert(`Import successful! ${importedCount > 0 ? importedCount + ' new role(s) added. ' : ''}Data has been merged with existing data.`);

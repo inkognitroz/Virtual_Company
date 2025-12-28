@@ -26,6 +26,7 @@
     "FileReader": "readonly",
     "Blob": "readonly",
     "URL": "readonly",
-    "fetch": "readonly"
+    "fetch": "readonly",
+    "navigator": "readonly"
   }
 }
