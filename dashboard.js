@@ -162,28 +162,92 @@ function renderChatMessages() {
     // Keep system message and add all chat messages
     let messagesHTML = `
         <div class="system-message">
-            Welcome to the Virtual Company group chat. Start collaborating with your AI team!
+            🚀 Welcome to the Virtual Company group chat. Start collaborating with your AI team!
         </div>
     `;
     
     chatMessages.forEach(msg => {
-        const messageClass = msg.sender === 'user' ? 'user' : 'role';
+        const messageClass = msg.sender === 'user' ? 'user' : (msg.isAI || msg.sender === 'ai' ? 'ai' : 'role');
+        const messageId = 'msg-' + Math.random().toString(36).substr(2, 9);
         messagesHTML += `
             <div class="message ${messageClass}">
-                <div class="message-header">
-                    <span class="message-avatar">${msg.avatar}</span>
-                    <span>${msg.senderName}</span>
-                    <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
+                <div class="message-wrapper">
+                    <div class="message-avatar-container">
+                        ${msg.avatar}
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-header">
+                            <span class="message-sender-name">${msg.senderName}</span>
+                            <span class="message-time">${msg.time}</span>
+                        </div>
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                    <div class="message-actions">
+                        <button class="message-action-btn" onclick="copyMessage('${messageId}')" title="Copy message">
+                            📋
+                        </button>
+                    </div>
                 </div>
-                <div class="message-content">${msg.content}</div>
             </div>
         `;
     });
     
     chatMessagesContainer.innerHTML = messagesHTML;
     
+    // Store message content for copy functionality
+    chatMessages.forEach((msg, index) => {
+        const messageId = 'msg-' + index;
+        chatMessagesContainer.dataset[messageId] = msg.content;
+    });
+    
     // Scroll to bottom
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Copy message to clipboard
+function copyMessage(messageId) {
+    const chatMessagesContainer = document.getElementById('chatMessages');
+    const content = chatMessagesContainer.dataset[messageId];
+    
+    if (content) {
+        navigator.clipboard.writeText(content).then(() => {
+            // Show a temporary notification
+            showNotification('Message copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy message:', err);
+        });
+    }
+}
+
+// Show temporary notification
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
 }
 
 // Chat form handling
@@ -398,14 +462,20 @@ function showTypingIndicator() {
     const chatMessagesContainer = document.getElementById('chatMessages');
     const typingDiv = document.createElement('div');
     typingDiv.id = 'typing-indicator';
-    typingDiv.className = 'message role typing';
+    typingDiv.className = 'message typing';
     typingDiv.innerHTML = `
-        <div class="message-header">
-            <span class="message-avatar">🤖</span>
-            <span>AI is typing...</span>
-        </div>
-        <div class="typing-dots">
-            <span></span><span></span><span></span>
+        <div class="message-wrapper">
+            <div class="message-avatar-container">
+                🤖
+            </div>
+            <div class="message-bubble">
+                <div class="message-header">
+                    <span class="message-sender-name">AI is thinking</span>
+                </div>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
         </div>
     `;
     chatMessagesContainer.appendChild(typingDiv);
