@@ -28,6 +28,39 @@ body {
     color: var(--light-text);
 }
 
+/* Tooltips */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: var(--dark-bg);
+    color: var(--light-text);
+    border-radius: var(--border-radius);
+    font-size: 0.85em;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--dark-bg);
+    z-index: 1000;
+}
+
 /* Security Warning */
 .security-warning {
     background: rgba(255, 193, 7, 0.1);
@@ -262,6 +295,29 @@ body {
 
 .section-header h1 {
     font-size: 2em;
+}
+
+.roles-header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.roles-search-input {
+    padding: 10px 15px;
+    background: var(--dark-secondary);
+    border: 1px solid var(--dark-tertiary);
+    border-radius: var(--border-radius);
+    color: var(--light-text);
+    font-size: 0.9em;
+    min-width: 250px;
+    transition: var(--transition);
+}
+
+.roles-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 /* Roles Grid */
@@ -829,6 +885,36 @@ body {
 
 .warning-note {
     color: var(--warning-color);
+}
+
+.shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--dark-tertiary);
+    border-radius: var(--border-radius);
+}
+
+.shortcut-item kbd {
+    background: var(--dark-bg);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    border: 1px solid var(--dark-tertiary);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.shortcut-item span {
+    color: var(--gray-text);
+    flex: 1;
 }
 
 .btn-danger {
