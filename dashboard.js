@@ -1,4 +1,16 @@
-// Dashboard JavaScript
+/**
+ * Dashboard JavaScript - Virtual Company Application
+ * 
+ * Main application logic for the dashboard including:
+ * - Role management (create, delete, edit)
+ * - Chat functionality with AI integration
+ * - Video call integrations
+ * - Data export/import
+ * - Voice input/output
+ * 
+ * @file dashboard.js
+ * @version 1.0.0
+ */
 
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
@@ -14,6 +26,9 @@ let roles = JSON.parse(localStorage.getItem('virtualCompanyRoles') || '[]');
 
 // Initialize chat messages
 let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages') || '[]');
+
+// Search state
+let chatSearchQuery = '';
 
 // AI Configuration
 let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
@@ -75,15 +90,46 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const role = {
-        id: Date.now().toString(),
-        name: document.getElementById('roleName').value,
+    const form = e.target;
+    const isEditMode = form.dataset.editMode === 'true';
+    const editId = form.dataset.editId;
+    
+    const roleData = {
+        name: document.getElementById('roleName').value.trim(),
         avatar: document.getElementById('roleAvatar').value,
-        description: document.getElementById('roleDescription').value,
-        aiInstructions: document.getElementById('aiInstructions').value
+        description: document.getElementById('roleDescription').value.trim(),
+        aiInstructions: document.getElementById('aiInstructions').value.trim()
     };
     
-    roles.push(role);
+    // Validate input
+    if (!roleData.name) {
+        alert('Role name is required.');
+        return;
+    }
+    
+    if (isEditMode) {
+        // Update existing role
+        const roleIndex = roles.findIndex(r => r.id === editId);
+        if (roleIndex !== -1) {
+            roles[roleIndex] = {
+                ...roles[roleIndex],
+                ...roleData
+            };
+        }
+        
+        // Reset edit mode
+        form.dataset.editMode = 'false';
+        delete form.dataset.editId;
+        form.querySelector('button[type="submit"]').textContent = 'Add Role';
+    } else {
+        // Add new role
+        const role = {
+            id: Date.now().toString(),
+            ...roleData
+        };
+        roles.push(role);
+    }
+    
     localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
     
     renderRoles();
@@ -124,13 +170,17 @@ function renderRoles() {
                 </div>
             ` : ''}
             <div class="role-actions">
+                <button class="btn btn-secondary btn-small" onclick="editRole('${role.id}')">Edit</button>
                 <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
             </div>
         </div>
     `).join('');
 }
 
-// Delete role
+/**
+ * Delete a role by ID
+ * @param {string} roleId - The ID of the role to delete
+ */
 function deleteRole(roleId) {
     if (confirm('Are you sure you want to delete this role?')) {
         roles = roles.filter(r => r.id !== roleId);
@@ -140,7 +190,53 @@ function deleteRole(roleId) {
     }
 }
 
+// Expose deleteRole to global scope for onclick handlers
+window.deleteRole = deleteRole;
+
+/**
+ * Edit an existing role
+ * @param {string} roleId - The ID of the role to edit
+ */
+function editRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    // Populate the form with existing data
+    document.getElementById('roleName').value = role.name;
+    document.getElementById('roleAvatar').value = role.avatar;
+    document.getElementById('roleDescription').value = role.description || '';
+    document.getElementById('aiInstructions').value = role.aiInstructions || '';
+    
+    // Change form submit to update mode
+    const form = document.getElementById('addRoleForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Update Role';
+    form.dataset.editMode = 'true';
+    form.dataset.editId = roleId;
+    
+    // Show modal
+    addRoleModal.style.display = 'block';
+}
+
+// Expose editRole to global scope for onclick handlers
+window.editRole = editRole;
+
 // ========== CHAT FUNCTIONALITY ==========
+
+/**
+ * Delete a message by index
+ * @param {number} messageIndex - Index of message to delete
+ */
+function deleteMessage(messageIndex) {
+    if (confirm('Delete this message?')) {
+        chatMessages.splice(messageIndex, 1);
+        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        renderChatMessages();
+    }
+}
+
+// Expose deleteMessage to global scope
+window.deleteMessage = deleteMessage;
 
 // Update chat role selector
 function updateChatRoleSelector() {
@@ -155,27 +251,49 @@ function updateChatRoleSelector() {
     });
 }
 
-// Render chat messages
+/**
+ * Render chat messages with optional search filtering
+ */
 function renderChatMessages() {
     const chatMessagesContainer = document.getElementById('chatMessages');
+    
+    // Filter messages based on search query
+    const filteredMessages = chatSearchQuery 
+        ? chatMessages.filter(msg => 
+            msg.content.toLowerCase().includes(chatSearchQuery.toLowerCase()) ||
+            msg.senderName.toLowerCase().includes(chatSearchQuery.toLowerCase())
+          )
+        : chatMessages;
     
     // Keep system message and add all chat messages
     let messagesHTML = `
         <div class="system-message">
             Welcome to the Virtual Company group chat. Start collaborating with your AI team!
+            ${chatSearchQuery ? `<br><br>Showing ${filteredMessages.length} of ${chatMessages.length} messages matching "${chatSearchQuery}"` : ''}
         </div>
     `;
     
-    chatMessages.forEach(msg => {
+    filteredMessages.forEach((msg) => {
         const messageClass = msg.sender === 'user' ? 'user' : 'role';
+        // Highlight search term if present
+        let content = msg.content;
+        if (chatSearchQuery) {
+            const regex = new RegExp(`(${chatSearchQuery})`, 'gi');
+            content = content.replace(regex, '<mark>$1</mark>');
+        }
+        
+        // Find actual index in chatMessages array
+        const actualIndex = chatMessages.indexOf(msg);
+        
         messagesHTML += `
             <div class="message ${messageClass}">
                 <div class="message-header">
                     <span class="message-avatar">${msg.avatar}</span>
                     <span>${msg.senderName}</span>
                     <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
+                    <button class="btn-delete-message" onclick="deleteMessage(${actualIndex})" title="Delete message">🗑️</button>
                 </div>
-                <div class="message-content">${msg.content}</div>
+                <div class="message-content">${content}</div>
             </div>
         `;
     });
@@ -466,7 +584,9 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 
 // ========== INITIALIZATION ==========
 
-// Initialize on page load
+/**
+ * Initialize the application
+ */
 function initializeApp() {
     renderRoles();
     updateChatRoleSelector();
@@ -474,6 +594,8 @@ function initializeApp() {
     initializeVoiceRecognition();
     setupAIConfigHandlers();
     setupExportImportHandlers();
+    setupChatSearch();
+    setupKeyboardShortcuts();
     
     // Add some default roles if none exist
     if (roles.length === 0) {
@@ -562,7 +684,9 @@ function speakText(text) {
     synthesis.speak(utterance);
 }
 
-// Toggle voice input
+/**
+ * Toggle voice input on/off
+ */
 function toggleVoiceInput() {
     if (!recognition) {
         alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
@@ -579,6 +703,9 @@ function toggleVoiceInput() {
     
     updateVoiceButton();
 }
+
+// Expose toggleVoiceInput to global scope for onclick handlers
+window.toggleVoiceInput = toggleVoiceInput;
 
 // Update voice button appearance
 function updateVoiceButton() {
@@ -664,6 +791,77 @@ function setupAIConfigHandlers() {
             localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
         });
     }
+}
+
+// ========== CHAT SEARCH ==========
+
+/**
+ * Setup chat search functionality
+ */
+function setupChatSearch() {
+    const searchInput = document.getElementById('chatSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            chatSearchQuery = e.target.value.trim();
+            renderChatMessages();
+        });
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            chatSearchQuery = '';
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            renderChatMessages();
+        });
+    }
+}
+
+// ========== KEYBOARD SHORTCUTS ==========
+
+/**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts() {
+    const chatInput = document.getElementById('chatInput');
+    
+    // Ctrl/Cmd + Enter to send message
+    if (chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const chatForm = document.getElementById('chatForm');
+                if (chatForm) {
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+    }
+    
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + / to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            const searchInput = document.getElementById('chatSearch');
+            if (searchInput && document.getElementById('chat-section').classList.contains('active')) {
+                searchInput.focus();
+            }
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('chatSearch');
+            if (searchInput && searchInput.value) {
+                chatSearchQuery = '';
+                searchInput.value = '';
+                renderChatMessages();
+            }
+        }
+    });
 }
 
 // ========== EXPORT/IMPORT FUNCTIONALITY ==========
