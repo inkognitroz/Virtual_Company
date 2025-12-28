@@ -372,6 +372,22 @@ body {
     margin-top: 10px;
 }
 
+.role-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--dark-tertiary);
+    font-size: 0.85em;
+    color: var(--gray-text);
+}
+
+.role-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .role-actions {
     display: flex;
     gap: 10px;

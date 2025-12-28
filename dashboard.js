@@ -179,6 +179,28 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
 });
 
 /**
+ * Get statistics for a role
+ * @param {string} roleId - The role ID
+ * @returns {Object} Statistics including message count
+ */
+function getRoleStats(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return { messageCount: 0, lastUsed: null };
+    
+    const roleMessages = chatMessages.filter(msg => 
+        msg.senderName === role.name || 
+        (msg.roleInstructions && msg.sender === 'role')
+    );
+    
+    const lastMessage = roleMessages.length > 0 ? roleMessages[roleMessages.length - 1] : null;
+    
+    return {
+        messageCount: roleMessages.length,
+        lastUsed: lastMessage ? lastMessage.timestamp : null
+    };
+}
+
+/**
  * Render roles with optional search filtering
  */
 function renderRoles() {
@@ -213,7 +235,13 @@ function renderRoles() {
         return;
     }
     
-    rolesGrid.innerHTML = filteredRoles.map(role => `
+    rolesGrid.innerHTML = filteredRoles.map(role => {
+        const stats = getRoleStats(role.id);
+        const lastUsedText = stats.lastUsed 
+            ? `Last used: ${formatTimestamp(new Date(stats.lastUsed))}`
+            : 'Never used';
+        
+        return `
         <div class="role-card">
             <div class="role-card-header">
                 <div class="role-avatar">${role.avatar}</div>
@@ -228,13 +256,18 @@ function renderRoles() {
                     ${role.aiInstructions}
                 </div>
             ` : ''}
+            <div class="role-stats">
+                <span>💬 ${stats.messageCount} messages</span>
+                <span>🕒 ${lastUsedText}</span>
+            </div>
             <div class="role-actions">
                 <button class="btn btn-secondary btn-small" onclick="editRole('${role.id}')">Edit</button>
                 <button class="btn btn-secondary btn-small" onclick="duplicateRole('${role.id}')">Duplicate</button>
                 <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     // Show search result count if searching
     if (roleSearchQuery) {
@@ -1064,6 +1097,33 @@ function exportChats() {
     downloadJSON(exportData, 'virtual-company-chats');
 }
 
+/**
+ * Export chat history as readable text file
+ */
+function exportChatsAsText() {
+    let textContent = 'Virtual Company - Chat History\n';
+    textContent += '='.repeat(50) + '\n';
+    textContent += `Exported: ${new Date().toLocaleString()}\n`;
+    textContent += `Total Messages: ${chatMessages.length}\n`;
+    textContent += '='.repeat(50) + '\n\n';
+    
+    chatMessages.forEach((msg) => {
+        textContent += `[${msg.time}] ${msg.avatar} ${msg.senderName}:\n`;
+        textContent += `${msg.content}\n\n`;
+    });
+    
+    // Create and download text file
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `virtual-company-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 // Helper function to download JSON
 function downloadJSON(data, filename) {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -1176,6 +1236,11 @@ function setupExportImportHandlers() {
     const exportChatsBtn = document.getElementById('exportChatsBtn');
     if (exportChatsBtn) {
         exportChatsBtn.addEventListener('click', exportChats);
+    }
+    
+    const exportChatsTxtBtn = document.getElementById('exportChatsTxtBtn');
+    if (exportChatsTxtBtn) {
+        exportChatsTxtBtn.addEventListener('click', exportChatsAsText);
     }
     
     // Import button
