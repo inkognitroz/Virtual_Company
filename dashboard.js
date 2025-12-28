@@ -160,9 +160,9 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
         delete form.dataset.editId;
         form.querySelector('button[type="submit"]').textContent = 'Add Role';
     } else {
-        // Add new role
+        // Add new role with robust ID generation
         const role = {
-            id: Date.now().toString(),
+            id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
             ...roleData
         };
         roles.push(role);
@@ -187,10 +187,14 @@ function getRoleStats(roleId) {
     const role = roles.find(r => r.id === roleId);
     if (!role) return { messageCount: 0, lastUsed: null };
     
-    const roleMessages = chatMessages.filter(msg => 
-        msg.senderName === role.name || 
-        (msg.roleInstructions && msg.sender === 'role')
-    );
+    // Count messages by matching role ID or name (for backwards compatibility)
+    const roleMessages = chatMessages.filter(msg => {
+        // Check if message has roleId (new messages)
+        if (msg.roleId === roleId) return true;
+        // Fallback to name matching for old messages
+        if (msg.senderName === role.name && msg.sender === 'role') return true;
+        return false;
+    });
     
     const lastMessage = roleMessages.length > 0 ? roleMessages[roleMessages.length - 1] : null;
     
@@ -330,9 +334,17 @@ function duplicateRole(roleId) {
     const role = roles.find(r => r.id === roleId);
     if (!role) return;
     
+    // Find a unique name for the copy
+    let copyName = role.name + ' (Copy)';
+    let counter = 1;
+    while (roles.some(r => r.name === copyName)) {
+        counter++;
+        copyName = `${role.name} (Copy ${counter})`;
+    }
+    
     const newRole = {
-        id: Date.now().toString(),
-        name: role.name + ' (Copy)',
+        id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+        name: copyName,
         avatar: role.avatar,
         description: role.description,
         aiInstructions: role.aiInstructions
@@ -378,6 +390,15 @@ function updateChatRoleSelector() {
 }
 
 /**
+ * Escape special regex characters in a string
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Render chat messages with optional search filtering
  */
 function renderChatMessages() {
@@ -404,7 +425,8 @@ function renderChatMessages() {
         // Highlight search term if present
         let content = msg.content;
         if (chatSearchQuery) {
-            const regex = new RegExp(`(${chatSearchQuery})`, 'gi');
+            const escapedQuery = escapeRegex(chatSearchQuery);
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
             content = content.replace(regex, '<mark>$1</mark>');
         }
         
@@ -485,6 +507,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
         message = {
             sender: 'role',
             senderName: role.name,
+            roleId: role.id,
             avatar: role.avatar,
             content: content,
             time: timeString,
@@ -534,8 +557,8 @@ async function generateAIResponse(userMessage) {
             } catch (apiError) {
                 console.error('AI API call failed:', apiError);
                 // Fallback to simulated response
-                aiResponse = generateSimulatedResponse(userMessage, respondingRole);
-                aiResponse = '⚠️ API Error - Using simulated response:\n\n' + aiResponse;
+                const fallbackResponse = generateSimulatedResponse(userMessage, respondingRole);
+                aiResponse = `⚠️ API Error - Using simulated response:\n\n${fallbackResponse}`;
             }
         } else {
             // Fallback to simulated response
@@ -549,6 +572,7 @@ async function generateAIResponse(userMessage) {
         const aiMessage = {
             sender: 'ai',
             senderName: respondingRole.name,
+            roleId: respondingRole.id,
             avatar: respondingRole.avatar,
             content: aiResponse,
             time: timeString,

@@ -503,6 +503,7 @@ body {
     border: none;
     cursor: pointer;
     font-size: 0.9em;
+    color: var(--gray-text);
     opacity: 0.6;
     transition: var(--transition);
     padding: 2px 4px;
@@ -510,6 +511,7 @@ body {
 }
 
 .btn-delete-message:hover {
+    color: var(--danger-color);
     opacity: 1;
     transform: scale(1.2);
 }
