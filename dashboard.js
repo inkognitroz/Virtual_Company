@@ -965,10 +965,10 @@ function downloadJSON(data, filename) {
 }
 
 // Import data
-function importData(file) {
+async function importData(file) {
     const reader = new FileReader();
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const importedData = JSON.parse(e.target.result);
             
@@ -984,24 +984,43 @@ function importData(file) {
             if (importedData.roles && Array.isArray(importedData.roles)) {
                 const existingIds = roles.map(r => r.id);
                 const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
-                roles.push(...newRoles);
-                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-                importedCount += newRoles.length;
+                
+                // Create roles via API
+                for (const role of newRoles) {
+                    try {
+                        await API.roles.create(role);
+                        roles.push(role);
+                        importedCount++;
+                    } catch (error) {
+                        console.error('Error importing role:', role.name, error);
+                    }
+                }
+                
                 renderRoles();
                 updateChatRoleSelector();
             }
             
             // Import chat messages if present
             if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
-                chatMessages.push(...importedData.chatMessages);
-                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                for (const message of importedData.chatMessages) {
+                    try {
+                        await API.messages.create(message);
+                        chatMessages.push(message);
+                    } catch (error) {
+                        console.error('Error importing message:', error);
+                    }
+                }
                 renderChatMessages();
             }
             
             // Import AI config if present
             if (importedData.aiConfig) {
                 aiConfig = { ...aiConfig, ...importedData.aiConfig };
-                localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
+                try {
+                    await API.aiConfig.update(aiConfig);
+                } catch (error) {
+                    console.error('Error importing AI config:', error);
+                }
             }
             
             alert(`Import successful! ${importedCount > 0 ? importedCount + ' new role(s) added. ' : ''}Data has been merged with existing data.`);
