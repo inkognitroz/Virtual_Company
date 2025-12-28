@@ -162,7 +162,7 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     } else {
         // Add new role with robust ID generation
         const role = {
-            id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             ...roleData
         };
         roles.push(role);
@@ -343,7 +343,7 @@ function duplicateRole(roleId) {
     }
     
     const newRole = {
-        id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+        id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
         name: copyName,
         avatar: role.avatar,
         description: role.description,
@@ -362,12 +362,16 @@ window.duplicateRole = duplicateRole;
 // ========== CHAT FUNCTIONALITY ==========
 
 /**
- * Delete a message by index
- * @param {number} messageIndex - Index of message to delete
+ * Delete a message by ID
+ * @param {string} messageId - ID of message to delete
  */
-function deleteMessage(messageIndex) {
+function deleteMessage(messageId) {
     if (confirm('Delete this message?')) {
-        chatMessages.splice(messageIndex, 1);
+        // Handle both new messages (with ID) and old messages (using timestamp as fallback)
+        chatMessages = chatMessages.filter(msg => {
+            const msgId = msg.id || msg.timestamp || Date.now().toString();
+            return msgId !== messageId;
+        });
         safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
         renderChatMessages();
     }
@@ -430,8 +434,8 @@ function renderChatMessages() {
             content = content.replace(regex, '<mark>$1</mark>');
         }
         
-        // Find actual index in chatMessages array
-        const actualIndex = chatMessages.indexOf(msg);
+        // Use message ID for deletion (fallback to timestamp for old messages)
+        const messageId = msg.id || msg.timestamp || Date.now().toString();
         
         messagesHTML += `
             <div class="message ${messageClass}">
@@ -439,7 +443,7 @@ function renderChatMessages() {
                     <span class="message-avatar">${msg.avatar}</span>
                     <span>${msg.senderName}</span>
                     <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
-                    <button class="btn-delete-message" onclick="deleteMessage(${actualIndex})" title="Delete message">🗑️</button>
+                    <button class="btn-delete-message" onclick="deleteMessage('${messageId}')" title="Delete message">🗑️</button>
                 </div>
                 <div class="message-content">${content}</div>
             </div>
@@ -495,6 +499,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     
     if (chatRole.value === 'user') {
         message = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'user',
             senderName: currentUser.name || currentUser.username,
             avatar: '👤',
@@ -505,6 +510,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     } else {
         const role = roles.find(r => r.id === chatRole.value);
         message = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'role',
             senderName: role.name,
             roleId: role.id,
@@ -570,6 +576,7 @@ async function generateAIResponse(userMessage) {
         const timeString = formatTimestamp(now);
         
         const aiMessage = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'ai',
             senderName: respondingRole.name,
             roleId: respondingRole.id,
@@ -598,6 +605,7 @@ async function generateAIResponse(userMessage) {
         
         // Show error message to user
         const errorMessage = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'system',
             senderName: 'System',
             avatar: '⚠️',
