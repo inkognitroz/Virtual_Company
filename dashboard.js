@@ -206,9 +206,12 @@ function renderChatMessages() {
 
 // Helper function to escape HTML
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // Copy message to clipboard
@@ -234,6 +237,7 @@ function copyMessage(messageId) {
 }
 
 // Fallback copy method for older browsers or non-HTTPS
+// Note: document.execCommand('copy') is deprecated but needed for legacy browser support
 function fallbackCopyToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
