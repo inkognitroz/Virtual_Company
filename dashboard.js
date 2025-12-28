@@ -121,20 +121,20 @@ function renderRoles() {
     rolesGrid.innerHTML = roles.map(role => `
         <div class="role-card">
             <div class="role-card-header">
-                <div class="role-avatar">${role.avatar}</div>
+                <div class="role-avatar">${escapeHtml(role.avatar)}</div>
                 <div>
-                    <h3>${role.name}</h3>
+                    <h3>${escapeHtml(role.name)}</h3>
                 </div>
             </div>
-            <p>${role.description || 'No description provided'}</p>
+            <p>${escapeHtml(role.description || 'No description provided')}</p>
             ${role.aiInstructions ? `
                 <div class="ai-instructions">
                     <strong>AI Instructions:</strong><br>
-                    ${role.aiInstructions}
+                    ${escapeHtml(role.aiInstructions)}
                 </div>
             ` : ''}
             <div class="role-actions">
-                <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
+                <button class="btn btn-secondary btn-small" onclick="deleteRole('${escapeHtml(role.id)}')">Delete</button>
             </div>
         </div>
     `).join('');
@@ -190,12 +190,12 @@ function renderChatMessages() {
             <div class="message ${messageClass}">
                 <div class="message-wrapper">
                     <div class="message-avatar-container">
-                        ${msg.avatar}
+                        ${escapeHtml(msg.avatar)}
                     </div>
                     <div class="message-bubble">
                         <div class="message-header">
-                            <span class="message-sender-name">${msg.senderName}</span>
-                            <span class="message-time">${msg.time}</span>
+                            <span class="message-sender-name">${escapeHtml(msg.senderName)}</span>
+                            <span class="message-time">${escapeHtml(msg.time)}</span>
                         </div>
                         <div class="message-content">${escapeHtml(msg.content)}</div>
                     </div>
