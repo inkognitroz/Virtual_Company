@@ -48,7 +48,9 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 
 ## 🛠️ Setup Instructions
 
-### For GitHub Pages
+### Option 1: Client-Only Mode (GitHub Pages)
+
+The application can run entirely in the browser using LocalStorage (no backend needed).
 
 1. **Fork or Clone this repository**
    ```bash
@@ -65,7 +67,58 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 3. **Access Your Site**
    - Your site will be available at: `https://[your-username].github.io/Virtual_Company/`
 
-### Local Development
+### Option 2: Full Stack Mode (With Backend)
+
+For a production-ready deployment with persistent data storage and multi-user support.
+
+#### Backend Setup
+
+1. **Navigate to backend directory**
+   ```bash
+   cd backend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env and set your configuration (especially JWT_SECRET)
+   ```
+
+4. **Start the backend server**
+   ```bash
+   npm start
+   # Or for development with auto-reload:
+   npm run dev
+   ```
+
+   The backend API will be available at `http://localhost:3000`
+
+#### Frontend Setup
+
+1. **Update API configuration**
+   - Edit `api-client.js` and set `BASE_URL` to your backend URL
+   - For local development, it defaults to `http://localhost:3000`
+   - For production, set it to your deployed backend URL
+
+2. **Serve the frontend**
+   ```bash
+   # From the root directory
+   python -m http.server 8000
+   # Or use any web server
+   ```
+
+3. **Access the application**
+   - Open `http://localhost:8000` in your browser
+   - The frontend will now use the backend API for data storage
+
+For detailed backend documentation, see [backend/README.md](backend/README.md)
+
+### Local Development (Frontend Only)
 
 1. **Clone the repository**
    ```bash
@@ -170,7 +223,10 @@ Get started with Virtual Company in just a few minutes:
 
 ### Architecture Overview
 
-The Virtual Company platform follows a modular client-side architecture:
+The Virtual Company platform supports two deployment modes:
+
+#### Client-Side Mode (Default)
+A fully client-side application using LocalStorage for data persistence:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -199,12 +255,79 @@ The Virtual Company platform follows a modular client-side architecture:
 └─────────────────────────────────────────────────┘
 ```
 
-**Data Flow:**
+#### Full Stack Mode (With Backend)
+A production-ready architecture with backend API and database:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                 Frontend (Browser)                       │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  User Interface (HTML/CSS/JavaScript)              │  │
+│  │  - auth.js (Authentication UI)                     │  │
+│  │  - dashboard.js (Main Application)                 │  │
+│  │  - api-client.js (API Communication)               │  │
+│  └────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+                          ↕ HTTP/REST API
+┌──────────────────────────────────────────────────────────┐
+│              Backend Server (Node.js/Express)            │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  API Routes                                        │  │
+│  │  - /api/auth (Register, Login, Logout)            │  │
+│  │  - /api/roles (CRUD Operations)                   │  │
+│  │  - /api/messages (Send, Get, Clear)               │  │
+│  │  - /api/ai-config (Get, Update)                   │  │
+│  └────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  Middleware                                        │  │
+│  │  - JWT Authentication                              │  │
+│  │  - CORS Configuration                              │  │
+│  │  - Error Handling                                  │  │
+│  └────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+                          ↕ SQL Queries
+┌──────────────────────────────────────────────────────────┐
+│                SQLite Database                           │
+│  - users (Authentication & Profiles)                     │
+│  - roles (Virtual Company Roles)                         │
+│  - messages (Chat History)                               │
+│  - ai_config (AI Settings per User)                      │
+└──────────────────────────────────────────────────────────┘
+```
+│     Core Application (dashboard.js)             │
+│     ├── Role Management                         │
+│     │   - Create/Delete Roles                   │
+│     │   - AI Instructions                       │
+│     ├── Chat System                             │
+│     │   - Message Handling                      │
+│     │   - AI Response Generation                │
+│     ├── AI Integration                          │
+│     │   - OpenAI/Claude/Custom APIs             │
+│     │   - Voice Recognition/Synthesis           │
+│     └── Data Management                         │
+│         - Export/Import                         │
+│         - LocalStorage Persistence              │
+├─────────────────────────────────────────────────┤
+│     Data Storage (LocalStorage)                 │
+│     - Users, Roles, Messages, Config            │
+└─────────────────────────────────────────────────┘
+```
+
+**Data Flow (Client-Side Mode):**
 1. User creates roles with specific AI instructions
 2. Messages are sent through the chat interface
 3. AI models (if configured) process messages using role-specific instructions
 4. Responses are generated and displayed in real-time
 5. All data persists in browser LocalStorage
+
+**Data Flow (Full Stack Mode):**
+1. User authentication via JWT tokens
+2. Frontend sends API requests to backend server
+3. Backend validates tokens and processes requests
+4. Data is stored in SQLite database
+5. Responses are returned to frontend
+6. UI updates with real-time data
+7. AI integration works same as client-side mode
 
 **Role Orchestration:**
 - Each role contains AI instructions that guide LLM behavior
@@ -213,52 +336,93 @@ The Virtual Company platform follows a modular client-side architecture:
 - Voice input/output supported for accessibility
 
 ### Technologies Used
+
+**Frontend:**
 - Pure HTML5, CSS3, and JavaScript (no frameworks required)
-- LocalStorage for data persistence
 - Responsive CSS Grid and Flexbox layouts
 - Modern ES6+ JavaScript features
 - Web Speech API for voice capabilities
+- Fetch API for backend communication
+
+**Backend (Optional):**
+- Node.js with Express.js framework
+- SQLite database (better-sqlite3)
+- JWT for authentication
+- bcrypt for password hashing
+- CORS middleware for cross-origin requests
+
+**DevOps:**
 - GitHub Actions for CI/CD
+- npm for package management
 
 ### Data Storage
-All data is stored locally in your browser using LocalStorage:
+
+The application supports two storage modes:
+
+**Client-Side Mode (LocalStorage):**
+All data is stored locally in your browser:
 - User accounts
 - Created roles
 - Chat messages
 - Session information
 - AI configuration
 
+**Full Stack Mode (Database):**
+Data is stored in SQLite database on the server:
+- User accounts with hashed passwords
+- Role definitions per user
+- Chat message history
+- AI configuration per user
+- Persistent across devices and sessions
+
 **Important Notes**:
-- Data is stored locally in your browser. Clearing browser data will reset the application.
-- This is a client-side demo application. For production use, implement server-side authentication and secure password storage.
-- No data is sent to external servers; everything stays in your browser.
+- **Client-Side Mode**: Data is stored locally in your browser. Clearing browser data will reset the application.
+- **Full Stack Mode**: Data is stored in the backend database with proper security measures.
+- **AI APIs**: When AI integration is enabled, messages are sent to the configured AI provider.
 
 ## 🔒 Security & Privacy
 
-### Data Storage Security
+### Client-Side Mode Security
 - **Local Storage**: All user data, roles, and messages are stored in browser LocalStorage
 - **No External Transmission**: Data never leaves your browser unless you explicitly connect an AI API
 - **Password Storage**: Passwords are stored in plain text in LocalStorage - **NOT recommended for production**
 - **Session Management**: Simple session tokens stored locally
+- **Use Case**: Development, demos, personal use, or single-user scenarios
+
+### Full Stack Mode Security (Backend Enabled)
+- **Database Storage**: All data stored in SQLite database on the server
+- **Password Security**: Passwords are hashed using bcrypt before storage
+- **JWT Authentication**: Secure token-based authentication with expiration
+- **Session Management**: Server-side session validation
+- **SQL Injection Protection**: Parameterized queries prevent SQL injection attacks
+- **CORS Configuration**: Cross-origin requests properly configured
+- **Data Isolation**: Each user's data is isolated by user_id with foreign key constraints
+- **Use Case**: Production deployments, multi-user scenarios, team collaboration
 
 ### AI Model Integration
-- **API Keys**: If you connect AI models (OpenAI, Claude), API keys are stored in LocalStorage
+- **API Keys**: 
+  - Client-Side Mode: Stored in LocalStorage (not secure for production)
+  - Full Stack Mode: Stored in database (more secure, but still consider using environment variables)
 - **Data Sharing**: When AI is enabled, your messages are sent to the configured AI provider
 - **Privacy**: Review AI provider privacy policies before connecting
 
-### Recommendations for Production Use
-1. **Implement Server-Side Authentication**: Use secure backend authentication (OAuth, JWT)
-2. **Encrypt Sensitive Data**: Hash passwords with bcrypt or similar
-3. **Use HTTPS**: Always serve over secure connections
-4. **API Key Security**: Store API keys in environment variables, not client-side
-5. **Data Backup**: Implement regular backups using the export functionality
-6. **Access Control**: Add role-based permissions for enterprise use
+### Security Best Practices (Production Deployment)
+1. **Use Full Stack Mode**: Enable the backend for production deployments
+2. **HTTPS Only**: Always serve over secure HTTPS connections
+3. **Strong JWT Secret**: Use a strong, random JWT secret in production
+4. **API Key Management**: Store AI API keys in server-side environment variables
+5. **Regular Updates**: Keep dependencies updated to patch security vulnerabilities
+6. **Input Validation**: Backend validates all user inputs
+7. **Rate Limiting**: Consider adding rate limiting for API endpoints
+8. **Backup Strategy**: Implement regular database backups
+9. **Environment Variables**: Never commit sensitive data to version control
 
 ### Privacy Features
 - **Export Your Data**: Download all your data anytime using Settings → Export
 - **Clear Data**: Remove all stored data with one click
 - **No Tracking**: No analytics or tracking scripts included
-- **Offline Capable**: Works completely offline (without AI integration)
+- **Offline Capable**: Client-side mode works completely offline (without AI integration)
+- **User Isolation**: In full stack mode, each user's data is completely isolated
 
 ## 🎯 Use Cases
 

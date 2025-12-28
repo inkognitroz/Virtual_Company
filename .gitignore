@@ -22,3 +22,9 @@ package-lock.json
 # Build artifacts
 dist/
 build/
+
+# Backend
+backend/.env
+backend/data/
+backend/node_modules/
+backend/package-lock.json
