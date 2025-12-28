@@ -227,6 +227,19 @@ body {
     width: 100%;
 }
 
+.callout {
+    padding: 12px 14px;
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+    border: 1px solid transparent;
+    background: var(--dark-tertiary);
+}
+
+.callout.warning {
+    border-color: var(--warning-color);
+    color: var(--light-text);
+}
+
 .main-content {
     flex: 1;
     padding: 30px;

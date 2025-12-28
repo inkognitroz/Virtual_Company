@@ -424,6 +424,14 @@ Data is stored in SQLite database on the server:
 - **Offline Capable**: Client-side mode works completely offline (without AI integration)
 - **User Isolation**: In full stack mode, each user's data is completely isolated
 
+### Product Readiness (current status)
+- Current demo limitations:
+- No backend/API today: authentication, storage, rate limits, billing, and audit logs are not implemented.
+- Chat is single-user/local (LocalStorage) and not real-time multi-user; there is no WebSocket/SSE infrastructure.
+- Video/voice uses external links (Meet/Teams/WhatsApp); there is no embedded WebRTC room or AI voice participation.
+- AI calls are front-end only; to ship, add server-side key management, logging, and safety/abuse controls.
+- Security/compliance artifacts (privacy policy, terms, data deletion/export) are not included.
+
 ## 🎯 Use Cases
 
 - **Startup Teams**: Quickly set up virtual team structures
