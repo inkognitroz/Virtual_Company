@@ -464,6 +464,39 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
     window.open('https://web.whatsapp.com', '_blank');
 });
 
+document.getElementById('shareAgentsBtn').addEventListener('click', () => {
+    shareAgentsToWhatsApp();
+});
+
+// Share agents list to WhatsApp
+function shareAgentsToWhatsApp() {
+    if (roles.length === 0) {
+        alert('No agents to share. Please create some roles first.');
+        return;
+    }
+    
+    // Create a formatted message with the agents list
+    let message = '🤖 *Virtual Company Agents*\n\n';
+    message += 'Our team consists of:\n\n';
+    
+    roles.forEach((role, index) => {
+        message += `${index + 1}. ${role.avatar} *${role.name}*\n`;
+        if (role.description) {
+            message += `   ${role.description}\n`;
+        }
+        message += '\n';
+    });
+    
+    message += '\n💼 Virtual Company - AI-powered team collaboration';
+    
+    // Encode the message for WhatsApp URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Open WhatsApp with the pre-filled message
+    const whatsappURL = `https://web.whatsapp.com/send?text=${encodedMessage}`;
+    window.open(whatsappURL, '_blank');
+}
+
 // ========== INITIALIZATION ==========
 
 // Initialize on page load
