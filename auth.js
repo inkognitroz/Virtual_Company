@@ -1,4 +1,5 @@
 // Authentication JavaScript
+/* global API */
 
 // Check if user is already logged in
 if (localStorage.getItem('authToken')) {

@@ -1,4 +1,5 @@
 // Dashboard JavaScript
+/* global API */
 
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
@@ -153,6 +154,9 @@ async function deleteRole(roleId) {
     }
 }
 
+// Make deleteRole accessible globally for onclick handlers
+window.deleteRole = deleteRole;
+
 // ========== CHAT FUNCTIONALITY ==========
 
 // Update chat role selector
@@ -248,6 +252,9 @@ function copyMessage(messageId) {
         fallbackCopyToClipboard(content);
     }
 }
+
+// Make copyMessage accessible globally for onclick handlers
+window.copyMessage = copyMessage;
 
 // Fallback copy method for older browsers or non-HTTPS
 // Note: document.execCommand('copy') is deprecated but needed for legacy browser support
@@ -800,6 +807,9 @@ function toggleVoiceInput() {
     
     updateVoiceButton();
 }
+
+// Make toggleVoiceInput accessible globally for onclick handlers
+window.toggleVoiceInput = toggleVoiceInput;
 
 // Update voice button appearance
 function updateVoiceButton() {
