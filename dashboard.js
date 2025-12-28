@@ -1,4 +1,16 @@
-// Dashboard JavaScript
+/**
+ * Dashboard JavaScript - Virtual Company Application
+ * 
+ * Main application logic for the dashboard including:
+ * - Role management (create, delete, edit)
+ * - Chat functionality with AI integration
+ * - Video call integrations
+ * - Data export/import
+ * - Voice input/output
+ * 
+ * @file dashboard.js
+ * @version 1.0.0
+ */
 
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
@@ -9,14 +21,55 @@ if (!currentUser) {
 // Display user info
 document.getElementById('userName').textContent = currentUser.name || currentUser.username;
 
+/**
+ * Safely get data from localStorage with error handling
+ * @param {string} key - localStorage key
+ * @param {*} defaultValue - Default value if key doesn't exist or parse fails
+ * @returns {*} Parsed data or default value
+ */
+function safeGetLocalStorage(key, defaultValue) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error(`Error reading ${key} from localStorage:`, error);
+        return defaultValue;
+    }
+}
+
+/**
+ * Safely set data to localStorage with error handling
+ * @param {string} key - localStorage key
+ * @param {*} value - Value to store
+ * @returns {boolean} Success status
+ */
+function safeSetLocalStorage(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (error) {
+        console.error(`Error writing ${key} to localStorage:`, error);
+        if (error.name === 'QuotaExceededError') {
+            alert('Storage quota exceeded. Please export your data and clear some old messages.');
+        }
+        return false;
+    }
+}
+
 // Initialize roles from localStorage
-let roles = JSON.parse(localStorage.getItem('virtualCompanyRoles') || '[]');
+let roles = safeGetLocalStorage('virtualCompanyRoles', []);
+
+// Role search state
+let roleSearchQuery = '';
 
 // Initialize chat messages
-let chatMessages = JSON.parse(localStorage.getItem('virtualCompanyChatMessages') || '[]');
+let chatMessages = safeGetLocalStorage('virtualCompanyChatMessages', []);
+
+// Search state
+let chatSearchQuery = '';
 
 // AI Configuration
-let aiConfig = JSON.parse(localStorage.getItem('virtualCompanyAIConfig') || '{}');
+let aiConfig = safeGetLocalStorage('virtualCompanyAIConfig', {});
 
 // Voice recognition and synthesis
 let recognition = null;
@@ -75,16 +128,47 @@ window.addEventListener('click', (e) => {
 document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const role = {
-        id: Date.now().toString(),
-        name: document.getElementById('roleName').value,
+    const form = e.target;
+    const isEditMode = form.dataset.editMode === 'true';
+    const editId = form.dataset.editId;
+    
+    const roleData = {
+        name: document.getElementById('roleName').value.trim(),
         avatar: document.getElementById('roleAvatar').value,
-        description: document.getElementById('roleDescription').value,
-        aiInstructions: document.getElementById('aiInstructions').value
+        description: document.getElementById('roleDescription').value.trim(),
+        aiInstructions: document.getElementById('aiInstructions').value.trim()
     };
     
-    roles.push(role);
-    localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+    // Validate input
+    if (!roleData.name) {
+        alert('Role name is required.');
+        return;
+    }
+    
+    if (isEditMode) {
+        // Update existing role
+        const roleIndex = roles.findIndex(r => r.id === editId);
+        if (roleIndex !== -1) {
+            roles[roleIndex] = {
+                ...roles[roleIndex],
+                ...roleData
+            };
+        }
+        
+        // Reset edit mode
+        form.dataset.editMode = 'false';
+        delete form.dataset.editId;
+        form.querySelector('button[type="submit"]').textContent = 'Add Role';
+    } else {
+        // Add new role with robust ID generation
+        const role = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
+            ...roleData
+        };
+        roles.push(role);
+    }
+    
+    safeSetLocalStorage('virtualCompanyRoles', roles);
     
     renderRoles();
     updateChatRoleSelector();
@@ -94,11 +178,48 @@ document.getElementById('addRoleForm').addEventListener('submit', (e) => {
     addRoleModal.style.display = 'none';
 });
 
-// Render roles
+/**
+ * Get statistics for a role
+ * @param {string} roleId - The role ID
+ * @returns {Object} Statistics including message count
+ */
+function getRoleStats(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return { messageCount: 0, lastUsed: null };
+    
+    // Count messages by matching role ID or name (for backwards compatibility)
+    const roleMessages = chatMessages.filter(msg => {
+        // Check if message has roleId (new messages)
+        if (msg.roleId === roleId) return true;
+        // Fallback to name matching for old messages
+        if (msg.senderName === role.name && msg.sender === 'role') return true;
+        return false;
+    });
+    
+    const lastMessage = roleMessages.length > 0 ? roleMessages[roleMessages.length - 1] : null;
+    
+    return {
+        messageCount: roleMessages.length,
+        lastUsed: lastMessage ? lastMessage.timestamp : null
+    };
+}
+
+/**
+ * Render roles with optional search filtering
+ */
 function renderRoles() {
     const rolesGrid = document.getElementById('rolesGrid');
     
-    if (roles.length === 0) {
+    // Filter roles based on search query
+    const filteredRoles = roleSearchQuery
+        ? roles.filter(role =>
+            role.name.toLowerCase().includes(roleSearchQuery.toLowerCase()) ||
+            (role.description && role.description.toLowerCase().includes(roleSearchQuery.toLowerCase())) ||
+            (role.aiInstructions && role.aiInstructions.toLowerCase().includes(roleSearchQuery.toLowerCase()))
+          )
+        : roles;
+    
+    if (filteredRoles.length === 0 && !roleSearchQuery) {
         rolesGrid.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-text);">
                 <p style="font-size: 1.2em; margin-bottom: 20px;">No roles created yet. Click "Add Role" to get started!</p>
@@ -108,7 +229,23 @@ function renderRoles() {
         return;
     }
     
-    rolesGrid.innerHTML = roles.map(role => `
+    if (filteredRoles.length === 0 && roleSearchQuery) {
+        rolesGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-text);">
+                <p style="font-size: 1.2em; margin-bottom: 20px;">No roles found matching "${roleSearchQuery}"</p>
+                <p>Showing 0 of ${roles.length} roles</p>
+            </div>
+        `;
+        return;
+    }
+    
+    rolesGrid.innerHTML = filteredRoles.map(role => {
+        const stats = getRoleStats(role.id);
+        const lastUsedText = stats.lastUsed 
+            ? `Last used: ${formatTimestamp(new Date(stats.lastUsed))}`
+            : 'Never used';
+        
+        return `
         <div class="role-card">
             <div class="role-card-header">
                 <div class="role-avatar">${role.avatar}</div>
@@ -123,24 +260,125 @@ function renderRoles() {
                     ${role.aiInstructions}
                 </div>
             ` : ''}
+            <div class="role-stats">
+                <span>💬 ${stats.messageCount} messages</span>
+                <span>🕒 ${lastUsedText}</span>
+            </div>
             <div class="role-actions">
+                <button class="btn btn-secondary btn-small" onclick="editRole('${role.id}')">Edit</button>
+                <button class="btn btn-secondary btn-small" onclick="duplicateRole('${role.id}')">Duplicate</button>
                 <button class="btn btn-secondary btn-small" onclick="deleteRole('${role.id}')">Delete</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
+    
+    // Show search result count if searching
+    if (roleSearchQuery) {
+        const countDiv = document.createElement('div');
+        countDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 10px; color: var(--gray-text); font-size: 0.9em;';
+        countDiv.textContent = `Showing ${filteredRoles.length} of ${roles.length} roles`;
+        rolesGrid.insertBefore(countDiv, rolesGrid.firstChild);
+    }
 }
 
-// Delete role
+/**
+ * Delete a role by ID
+ * @param {string} roleId - The ID of the role to delete
+ */
 function deleteRole(roleId) {
     if (confirm('Are you sure you want to delete this role?')) {
         roles = roles.filter(r => r.id !== roleId);
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        safeSetLocalStorage('virtualCompanyRoles', roles);
         renderRoles();
         updateChatRoleSelector();
     }
 }
 
+// Expose deleteRole to global scope for onclick handlers
+window.deleteRole = deleteRole;
+
+/**
+ * Edit an existing role
+ * @param {string} roleId - The ID of the role to edit
+ */
+function editRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    // Populate the form with existing data
+    document.getElementById('roleName').value = role.name;
+    document.getElementById('roleAvatar').value = role.avatar;
+    document.getElementById('roleDescription').value = role.description || '';
+    document.getElementById('aiInstructions').value = role.aiInstructions || '';
+    
+    // Change form submit to update mode
+    const form = document.getElementById('addRoleForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Update Role';
+    form.dataset.editMode = 'true';
+    form.dataset.editId = roleId;
+    
+    // Show modal
+    addRoleModal.style.display = 'block';
+}
+
+// Expose editRole to global scope for onclick handlers
+window.editRole = editRole;
+
+/**
+ * Duplicate an existing role
+ * @param {string} roleId - The ID of the role to duplicate
+ */
+function duplicateRole(roleId) {
+    const role = roles.find(r => r.id === roleId);
+    if (!role) return;
+    
+    // Find a unique name for the copy
+    let copyName = role.name + ' (Copy)';
+    let counter = 1;
+    while (roles.some(r => r.name === copyName)) {
+        counter++;
+        copyName = `${role.name} (Copy ${counter})`;
+    }
+    
+    const newRole = {
+        id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
+        name: copyName,
+        avatar: role.avatar,
+        description: role.description,
+        aiInstructions: role.aiInstructions
+    };
+    
+    roles.push(newRole);
+    safeSetLocalStorage('virtualCompanyRoles', roles);
+    renderRoles();
+    updateChatRoleSelector();
+}
+
+// Expose duplicateRole to global scope for onclick handlers
+window.duplicateRole = duplicateRole;
+
 // ========== CHAT FUNCTIONALITY ==========
+
+/**
+ * Delete a message by ID
+ * @param {string} messageId - ID of message to delete
+ */
+function deleteMessage(messageId) {
+    if (confirm('Delete this message?')) {
+        // Handle both new messages (with ID) and old messages (using timestamp as fallback)
+        chatMessages = chatMessages.filter(msg => {
+            const msgId = msg.id || msg.timestamp || Date.now().toString();
+            return msgId !== messageId;
+        });
+        safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
+        renderChatMessages();
+    }
+}
+
+// Expose deleteMessage to global scope
+window.deleteMessage = deleteMessage;
 
 // Update chat role selector
 function updateChatRoleSelector() {
@@ -155,27 +393,59 @@ function updateChatRoleSelector() {
     });
 }
 
-// Render chat messages
+/**
+ * Escape special regex characters in a string
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Render chat messages with optional search filtering
+ */
 function renderChatMessages() {
     const chatMessagesContainer = document.getElementById('chatMessages');
+    
+    // Filter messages based on search query
+    const filteredMessages = chatSearchQuery 
+        ? chatMessages.filter(msg => 
+            msg.content.toLowerCase().includes(chatSearchQuery.toLowerCase()) ||
+            msg.senderName.toLowerCase().includes(chatSearchQuery.toLowerCase())
+          )
+        : chatMessages;
     
     // Keep system message and add all chat messages
     let messagesHTML = `
         <div class="system-message">
             Welcome to the Virtual Company group chat. Start collaborating with your AI team!
+            ${chatSearchQuery ? `<br><br>Showing ${filteredMessages.length} of ${chatMessages.length} messages matching "${chatSearchQuery}"` : ''}
         </div>
     `;
     
-    chatMessages.forEach(msg => {
+    filteredMessages.forEach((msg) => {
         const messageClass = msg.sender === 'user' ? 'user' : 'role';
+        // Highlight search term if present
+        let content = msg.content;
+        if (chatSearchQuery) {
+            const escapedQuery = escapeRegex(chatSearchQuery);
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            content = content.replace(regex, '<mark>$1</mark>');
+        }
+        
+        // Use message ID for deletion (fallback to timestamp for old messages)
+        const messageId = msg.id || msg.timestamp || Date.now().toString();
+        
         messagesHTML += `
             <div class="message ${messageClass}">
                 <div class="message-header">
                     <span class="message-avatar">${msg.avatar}</span>
                     <span>${msg.senderName}</span>
                     <span style="margin-left: auto; font-size: 0.8em; font-weight: normal;">${msg.time}</span>
+                    <button class="btn-delete-message" onclick="deleteMessage('${messageId}')" title="Delete message">🗑️</button>
                 </div>
-                <div class="message-content">${msg.content}</div>
+                <div class="message-content">${content}</div>
             </div>
         `;
     });
@@ -184,6 +454,32 @@ function renderChatMessages() {
     
     // Scroll to bottom
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+/**
+ * Format timestamp with date if not today
+ * @param {Date} date - Date to format
+ * @returns {string} Formatted timestamp
+ */
+function formatTimestamp(date) {
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    if (isToday) {
+        return timeString;
+    }
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+    if (isYesterday) {
+        return `Yesterday ${timeString}`;
+    }
+    
+    return `${date.toLocaleDateString()} ${timeString}`;
 }
 
 // Chat form handling
@@ -197,32 +493,37 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     if (!content) return;
     
     const now = new Date();
-    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeString = formatTimestamp(now);
     
     let message;
     
     if (chatRole.value === 'user') {
         message = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'user',
             senderName: currentUser.name || currentUser.username,
             avatar: '👤',
             content: content,
-            time: timeString
+            time: timeString,
+            timestamp: now.toISOString()
         };
     } else {
         const role = roles.find(r => r.id === chatRole.value);
         message = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'role',
             senderName: role.name,
+            roleId: role.id,
             avatar: role.avatar,
             content: content,
             time: timeString,
+            timestamp: now.toISOString(),
             roleInstructions: role.aiInstructions
         };
     }
     
     chatMessages.push(message);
-    localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+    safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
     
     renderChatMessages();
     chatInput.value = '';
@@ -233,7 +534,10 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Generate AI Response
+/**
+ * Generate AI Response
+ * Enhanced with better error handling and user feedback
+ */
 async function generateAIResponse(userMessage) {
     // Show typing indicator
     showTypingIndicator();
@@ -241,7 +545,10 @@ async function generateAIResponse(userMessage) {
     try {
         // Select a random AI role to respond or use configured AI
         const aiRoles = roles.filter(r => r.aiInstructions);
-        if (aiRoles.length === 0) return;
+        if (aiRoles.length === 0) {
+            removeTypingIndicator();
+            return;
+        }
         
         // Randomly select an AI role to respond (or could be based on context)
         const respondingRole = aiRoles[Math.floor(Math.random() * aiRoles.length)];
@@ -251,7 +558,14 @@ async function generateAIResponse(userMessage) {
         // Check if AI API is configured
         if (aiConfig.apiKey && aiConfig.provider) {
             // Call actual AI API
-            aiResponse = await callAIAPI(userMessage, respondingRole);
+            try {
+                aiResponse = await callAIAPI(userMessage, respondingRole);
+            } catch (apiError) {
+                console.error('AI API call failed:', apiError);
+                // Fallback to simulated response
+                const fallbackResponse = generateSimulatedResponse(userMessage, respondingRole);
+                aiResponse = `⚠️ API Error - Using simulated response:\n\n${fallbackResponse}`;
+            }
         } else {
             // Fallback to simulated response
             aiResponse = generateSimulatedResponse(userMessage, respondingRole);
@@ -259,14 +573,17 @@ async function generateAIResponse(userMessage) {
         
         // Add AI response to chat
         const now = new Date();
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeString = formatTimestamp(now);
         
         const aiMessage = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
             sender: 'ai',
             senderName: respondingRole.name,
+            roleId: respondingRole.id,
             avatar: respondingRole.avatar,
             content: aiResponse,
             time: timeString,
+            timestamp: now.toISOString(),
             isAI: true
         };
         
@@ -274,7 +591,7 @@ async function generateAIResponse(userMessage) {
         removeTypingIndicator();
         
         chatMessages.push(aiMessage);
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
         renderChatMessages();
         
         // Speak the response if voice is enabled
@@ -285,6 +602,20 @@ async function generateAIResponse(userMessage) {
     } catch (error) {
         console.error('Error generating AI response:', error);
         removeTypingIndicator();
+        
+        // Show error message to user
+        const errorMessage = {
+            id: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 11),
+            sender: 'system',
+            senderName: 'System',
+            avatar: '⚠️',
+            content: 'Failed to generate AI response. Please try again or check your AI configuration.',
+            time: formatTimestamp(new Date()),
+            timestamp: new Date().toISOString()
+        };
+        chatMessages.push(errorMessage);
+        safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
+        renderChatMessages();
     }
 }
 
@@ -466,7 +797,9 @@ document.getElementById('createWhatsAppBtn').addEventListener('click', () => {
 
 // ========== INITIALIZATION ==========
 
-// Initialize on page load
+/**
+ * Initialize the application
+ */
 function initializeApp() {
     renderRoles();
     updateChatRoleSelector();
@@ -474,6 +807,9 @@ function initializeApp() {
     initializeVoiceRecognition();
     setupAIConfigHandlers();
     setupExportImportHandlers();
+    setupChatSearch();
+    setupRolesSearch();
+    setupKeyboardShortcuts();
     
     // Add some default roles if none exist
     if (roles.length === 0) {
@@ -502,7 +838,7 @@ function initializeApp() {
         ];
         
         roles = defaultRoles;
-        localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+        safeSetLocalStorage('virtualCompanyRoles', roles);
         renderRoles();
         updateChatRoleSelector();
     }
@@ -562,7 +898,9 @@ function speakText(text) {
     synthesis.speak(utterance);
 }
 
-// Toggle voice input
+/**
+ * Toggle voice input on/off
+ */
 function toggleVoiceInput() {
     if (!recognition) {
         alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
@@ -579,6 +917,9 @@ function toggleVoiceInput() {
     
     updateVoiceButton();
 }
+
+// Expose toggleVoiceInput to global scope for onclick handlers
+window.toggleVoiceInput = toggleVoiceInput;
 
 // Update voice button appearance
 function updateVoiceButton() {
@@ -666,6 +1007,91 @@ function setupAIConfigHandlers() {
     }
 }
 
+// ========== CHAT SEARCH ==========
+
+/**
+ * Setup roles search functionality
+ */
+function setupRolesSearch() {
+    const searchInput = document.getElementById('rolesSearch');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            roleSearchQuery = e.target.value.trim();
+            renderRoles();
+        });
+    }
+}
+
+/**
+ * Setup chat search functionality
+ */
+function setupChatSearch() {
+    const searchInput = document.getElementById('chatSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            chatSearchQuery = e.target.value.trim();
+            renderChatMessages();
+        });
+    }
+    
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            chatSearchQuery = '';
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            renderChatMessages();
+        });
+    }
+}
+
+// ========== KEYBOARD SHORTCUTS ==========
+
+/**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts() {
+    const chatInput = document.getElementById('chatInput');
+    
+    // Ctrl/Cmd + Enter to send message
+    if (chatInput) {
+        chatInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const chatForm = document.getElementById('chatForm');
+                if (chatForm) {
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+    }
+    
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + / to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            const searchInput = document.getElementById('chatSearch');
+            if (searchInput && document.getElementById('chat-section').classList.contains('active')) {
+                searchInput.focus();
+            }
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('chatSearch');
+            if (searchInput && searchInput.value) {
+                chatSearchQuery = '';
+                searchInput.value = '';
+                renderChatMessages();
+            }
+        }
+    });
+}
+
 // ========== EXPORT/IMPORT FUNCTIONALITY ==========
 
 // Export all data
@@ -703,6 +1129,33 @@ function exportChats() {
     downloadJSON(exportData, 'virtual-company-chats');
 }
 
+/**
+ * Export chat history as readable text file
+ */
+function exportChatsAsText() {
+    let textContent = 'Virtual Company - Chat History\n';
+    textContent += '='.repeat(50) + '\n';
+    textContent += `Exported: ${new Date().toLocaleString()}\n`;
+    textContent += `Total Messages: ${chatMessages.length}\n`;
+    textContent += '='.repeat(50) + '\n\n';
+    
+    chatMessages.forEach((msg) => {
+        textContent += `[${msg.time}] ${msg.avatar} ${msg.senderName}:\n`;
+        textContent += `${msg.content}\n\n`;
+    });
+    
+    // Create and download text file
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `virtual-company-chat-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 // Helper function to download JSON
 function downloadJSON(data, filename) {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -738,7 +1191,7 @@ function importData(file) {
                 const existingIds = roles.map(r => r.id);
                 const newRoles = importedData.roles.filter(r => !existingIds.includes(r.id));
                 roles.push(...newRoles);
-                localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
+                safeSetLocalStorage('virtualCompanyRoles', roles);
                 importedCount += newRoles.length;
                 renderRoles();
                 updateChatRoleSelector();
@@ -747,7 +1200,7 @@ function importData(file) {
             // Import chat messages if present
             if (importedData.chatMessages && Array.isArray(importedData.chatMessages)) {
                 chatMessages.push(...importedData.chatMessages);
-                localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+                safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
                 renderChatMessages();
             }
             
@@ -776,8 +1229,8 @@ function clearAllData() {
             chatMessages = [];
             aiConfig = {};
             
-            localStorage.setItem('virtualCompanyRoles', JSON.stringify(roles));
-            localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+            safeSetLocalStorage('virtualCompanyRoles', roles);
+            safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
             localStorage.setItem('virtualCompanyAIConfig', JSON.stringify(aiConfig));
             
             renderRoles();
@@ -793,7 +1246,7 @@ function clearAllData() {
 function clearChats() {
     if (confirm('Are you sure you want to clear all chat messages? This action cannot be undone!')) {
         chatMessages = [];
-        localStorage.setItem('virtualCompanyChatMessages', JSON.stringify(chatMessages));
+        safeSetLocalStorage('virtualCompanyChatMessages', chatMessages);
         renderChatMessages();
         alert('Chat history has been cleared.');
     }
@@ -815,6 +1268,11 @@ function setupExportImportHandlers() {
     const exportChatsBtn = document.getElementById('exportChatsBtn');
     if (exportChatsBtn) {
         exportChatsBtn.addEventListener('click', exportChats);
+    }
+    
+    const exportChatsTxtBtn = document.getElementById('exportChatsTxtBtn');
+    if (exportChatsTxtBtn) {
+        exportChatsTxtBtn.addEventListener('click', exportChatsAsText);
     }
     
     // Import button

@@ -50,7 +50,10 @@
             <section id="roles-section" class="content-section active">
                 <div class="section-header">
                     <h1>Roles & Team Management</h1>
-                    <button class="btn btn-primary" id="addRoleBtn">+ Add Role</button>
+                    <div class="roles-header-controls">
+                        <input type="text" id="rolesSearch" placeholder="🔍 Search roles..." class="roles-search-input">
+                        <button class="btn btn-primary" id="addRoleBtn">+ Add Role</button>
+                    </div>
                 </div>
                 
                 <div class="roles-grid" id="rolesGrid">
@@ -99,6 +102,10 @@
             <section id="chat-section" class="content-section">
                 <div class="section-header">
                     <h1>Group Chat</h1>
+                    <div class="chat-search-container">
+                        <input type="text" id="chatSearch" placeholder="🔍 Search messages..." class="chat-search-input" data-tooltip="Search by message content or sender name">
+                        <button class="btn btn-secondary btn-small" id="clearSearchBtn" data-tooltip="Clear search">Clear</button>
+                    </div>
                 </div>
                 
                 <div class="chat-container">
@@ -119,8 +126,8 @@
                             <div class="chat-input-wrapper">
                                 <textarea id="chatInput" placeholder="Type your message or prompt..." rows="3"></textarea>
                                 <div class="chat-controls">
-                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()">🎤 Voice</button>
-                                    <button type="submit" class="btn btn-primary">Send</button>
+                                    <button type="button" class="btn btn-secondary btn-voice" id="voiceInputBtn" onclick="toggleVoiceInput()" data-tooltip="Click to start voice input">🎤 Voice</button>
+                                    <button type="submit" class="btn btn-primary" data-tooltip="Send message (Ctrl+Enter)">Send</button>
                                 </div>
                             </div>
                         </form>
@@ -254,12 +261,32 @@
                 
                 <div class="settings-content">
                     <div class="settings-card">
+                        <h3>⌨️ Keyboard Shortcuts</h3>
+                        <p>Use these keyboard shortcuts for faster navigation:</p>
+                        <div class="shortcuts-list">
+                            <div class="shortcut-item">
+                                <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                                <span>Send message in chat</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <kbd>Ctrl</kbd> + <kbd>/</kbd>
+                                <span>Focus search (in chat)</span>
+                            </div>
+                            <div class="shortcut-item">
+                                <kbd>Esc</kbd>
+                                <span>Clear search</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
                         <h3>📤 Export Data</h3>
                         <p>Download your roles, chat history, and settings as a backup.</p>
                         <div class="export-options">
-                            <button class="btn btn-primary" id="exportAllBtn">Export All Data</button>
-                            <button class="btn btn-secondary" id="exportRolesBtn">Export Roles Only</button>
-                            <button class="btn btn-secondary" id="exportChatsBtn">Export Chats Only</button>
+                            <button class="btn btn-primary" id="exportAllBtn" data-tooltip="Export all data as JSON">Export All Data</button>
+                            <button class="btn btn-secondary" id="exportRolesBtn" data-tooltip="Export only roles">Export Roles Only</button>
+                            <button class="btn btn-secondary" id="exportChatsBtn" data-tooltip="Export chat history as JSON">Export Chats Only</button>
+                            <button class="btn btn-secondary" id="exportChatsTxtBtn" data-tooltip="Export chat as readable text file">Export Chat as Text</button>
                         </div>
                     </div>
                     

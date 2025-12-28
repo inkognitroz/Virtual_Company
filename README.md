@@ -2,6 +2,27 @@
 
 Virtual Company is an AI-based Virtual Company that can be set up in minutes. The platform features the possibility to define all roles necessary to reach company goals and mission. All functions are designed to be fully automated and AI-based.
 
+## 🆕 What's New (Latest Updates)
+
+### Enhanced Features
+- ✅ **Role Editing**: Edit existing roles directly from the role card
+- ✅ **Role Duplication**: Quickly duplicate roles to create similar team members
+- ✅ **Advanced Search**: Search messages and roles with real-time highlighting
+- ✅ **Role Statistics**: View message count and last used time for each role
+- ✅ **Improved Timestamps**: Messages show "Today", "Yesterday", or full dates
+- ✅ **Delete Messages**: Remove individual messages from chat history
+- ✅ **Keyboard Shortcuts**: Ctrl+Enter to send, Ctrl+/ to search, Esc to clear
+- ✅ **Export as Text**: Export chat history as readable text file
+- ✅ **Tooltips**: Helpful tooltips throughout the interface
+- ✅ **Better Error Handling**: Improved error messages and fallback responses
+
+### Code Quality Improvements
+- ✅ **Input Validation**: Comprehensive validation with clear error messages
+- ✅ **Security Warning**: Prominent warning about demo limitations
+- ✅ **JSDoc Comments**: Better code documentation
+- ✅ **Safe localStorage**: Protection against quota exceeded errors
+- ✅ **No ESLint Warnings**: Clean, well-formatted code
+
 ## 🚀 Live Demo
 
 Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https://inkognitroz.github.io/Virtual_Company/)
@@ -9,32 +30,44 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 ## ✨ Features
 
 ### 🔐 Easy Authentication
-- Simple login/registration system
+- Simple login/registration system with input validation
 - Email or username-based authentication
 - Secure session management
+- **Security warning** for demo limitations
 
 ### 👥 Role Management
 - Create custom roles for your virtual company
+- **Edit existing roles** with easy inline editing
+- **Duplicate roles** to quickly create similar team members
 - Assign avatars and descriptions to each role
 - Define AI instructions for each role to guide LLM behavior
+- **Search roles** by name, description, or AI instructions
+- **Role statistics**: View message count and last used time for each role
 
 ### 🤖 AI Integration
 - Built-in support for AI model integration
 - Role-based AI prompts with custom instructions
 - Easy connection to OpenAI GPT, Claude, or custom AI endpoints
 - Pre-configured prompt templates for common scenarios
+- **Enhanced error handling** with fallback responses
+- Voice input/output support
 
 ### 💬 Group Chat
 - Common group chat for team collaboration
 - Send messages as yourself or any created role
-- Persistent chat history
+- Persistent chat history with **improved timestamps** (Today, Yesterday, or full date)
 - Role-specific AI-powered responses
+- **Search messages** with real-time highlighting
+- **Delete individual messages** with one click
+- **Keyboard shortcuts** for faster workflow (Ctrl+Enter to send)
 
 ### 📊 Data Management
 - **Export/Import**: Backup and restore your entire workspace
 - Export all data or specific components (roles, chats)
+- **Export chat as text file** for easy reading and sharing
 - Import data to merge or migrate between browsers
 - One-click data clearing with confirmation
+- **Safe localStorage** operations with quota exceeded protection
 
 ### 📹 Video Call Integration
 - **Google Meet**: Create or join meetings directly
@@ -45,6 +78,13 @@ Visit the live website: [https://inkognitroz.github.io/Virtual_Company/](https:/
 - Clean, professional dark theme interface
 - Responsive design for desktop and mobile
 - Intuitive navigation and user experience
+- **Tooltips** on important elements for better guidance
+- **Keyboard shortcuts** reference in settings
+
+### ⌨️ Keyboard Shortcuts
+- **Ctrl+Enter**: Send message in chat
+- **Ctrl+/**: Focus search in chat
+- **Esc**: Clear search
 
 ## 🛠️ Setup Instructions
 
