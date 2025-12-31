@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { sanitizeString, sanitizeText } = require('../utils/validation');
+const { LENGTH_LIMITS } = require('../config/constants');
 
 const router = express.Router();
 
@@ -27,10 +28,10 @@ router.post('/', authenticateToken, (req, res) => {
         }
 
         // Sanitize inputs
-        const sanitizedName = sanitizeString(name, 100);
-        const sanitizedAvatar = sanitizeString(avatar, 10);
-        const sanitizedDescription = sanitizeText(description || '', 500);
-        const sanitizedInstructions = sanitizeText(aiInstructions || '', 2000);
+        const sanitizedName = sanitizeString(name, LENGTH_LIMITS.ROLE_NAME_MAX);
+        const sanitizedAvatar = sanitizeString(avatar, LENGTH_LIMITS.ROLE_AVATAR_MAX);
+        const sanitizedDescription = sanitizeText(description || '', LENGTH_LIMITS.ROLE_DESCRIPTION_MAX);
+        const sanitizedInstructions = sanitizeText(aiInstructions || '', LENGTH_LIMITS.AI_INSTRUCTIONS_MAX);
 
         if (!sanitizedName || !sanitizedAvatar) {
             return res.status(400).json({ error: 'Invalid name or avatar' });

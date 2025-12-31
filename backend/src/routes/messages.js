@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const { sanitizeString, sanitizeText } = require('../utils/validation');
+const { LENGTH_LIMITS } = require('../config/constants');
 
 const router = express.Router();
 
@@ -27,12 +28,12 @@ router.post('/', authenticateToken, (req, res) => {
         }
 
         // Sanitize inputs
-        const sanitizedSender = sanitizeString(sender, 100);
-        const sanitizedSenderName = sanitizeString(senderName, 100);
-        const sanitizedAvatar = sanitizeString(avatar, 10);
-        const sanitizedContent = sanitizeText(content, 5000);
-        const sanitizedTime = sanitizeString(time, 50);
-        const sanitizedInstructions = sanitizeText(roleInstructions || '', 2000);
+        const sanitizedSender = sanitizeString(sender, LENGTH_LIMITS.NAME_MAX);
+        const sanitizedSenderName = sanitizeString(senderName, LENGTH_LIMITS.NAME_MAX);
+        const sanitizedAvatar = sanitizeString(avatar, LENGTH_LIMITS.ROLE_AVATAR_MAX);
+        const sanitizedContent = sanitizeText(content, LENGTH_LIMITS.MESSAGE_CONTENT_MAX);
+        const sanitizedTime = sanitizeString(time, LENGTH_LIMITS.TIME_STRING_MAX);
+        const sanitizedInstructions = sanitizeText(roleInstructions || '', LENGTH_LIMITS.AI_INSTRUCTIONS_MAX);
 
         if (!sanitizedSender || !sanitizedSenderName || !sanitizedAvatar || !sanitizedContent) {
             return res.status(400).json({ error: 'Invalid input data' });

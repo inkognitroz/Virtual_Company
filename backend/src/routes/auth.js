@@ -9,6 +9,7 @@ const {
     validatePassword, 
     validateUsername 
 } = require('../utils/validation');
+const { JWT, PASSWORD, LENGTH_LIMITS } = require('../config/constants');
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.post('/register', async (req, res) => {
         }
 
         // Sanitize name
-        const sanitizedName = sanitizeString(name, 100);
+        const sanitizedName = sanitizeString(name, LENGTH_LIMITS.NAME_MAX);
         if (!sanitizedName) {
             return res.status(400).json({ error: 'Name is required' });
         }
@@ -53,7 +54,7 @@ router.post('/register', async (req, res) => {
         }
 
         // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, PASSWORD.BCRYPT_ROUNDS);
 
         // Insert new user
         const result = db.prepare('INSERT INTO users (email, username, password, name) VALUES (?, ?, ?, ?)').run(sanitizedEmail, username.trim(), hashedPassword, sanitizedName);
@@ -62,7 +63,7 @@ router.post('/register', async (req, res) => {
         const token = jwt.sign(
             { id: result.lastInsertRowid, username: username.trim(), email: sanitizedEmail },
             JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: JWT.EXPIRATION }
         );
 
         res.status(201).json({
@@ -102,7 +103,7 @@ router.post('/login', async (req, res) => {
         const token = jwt.sign(
             { id: user.id, username: user.username, email: user.email },
             JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: JWT.EXPIRATION }
         );
 
         res.json({

@@ -6,6 +6,7 @@ const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const { RATE_LIMIT } = require('./config/constants');
 
 const authRoutes = require('./routes/auth');
 const rolesRoutes = require('./routes/roles');
@@ -27,8 +28,8 @@ app.use(compression());
 
 // Rate limiting - prevents abuse
 const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: RATE_LIMIT.WINDOW_MS,
+    max: RATE_LIMIT.MAX_REQUESTS,
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false
@@ -39,8 +40,8 @@ app.use('/api/', apiLimiter);
 
 // Stricter rate limiting for auth routes
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 requests per windowMs
+    windowMs: RATE_LIMIT.WINDOW_MS,
+    max: RATE_LIMIT.AUTH_MAX_REQUESTS,
     message: { error: 'Too many authentication attempts, please try again later' }
 });
 

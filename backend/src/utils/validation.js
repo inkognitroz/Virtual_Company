@@ -1,4 +1,5 @@
 const validator = require('validator');
+const { LENGTH_LIMITS, PASSWORD } = require('../config/constants');
 
 /**
  * Sanitizes and validates string input
@@ -6,7 +7,7 @@ const validator = require('validator');
  * @param {number} maxLength - Maximum allowed length (default: 1000)
  * @returns {string} Sanitized string
  */
-function sanitizeString(input, maxLength = 1000) {
+function sanitizeString(input, maxLength = LENGTH_LIMITS.NAME_MAX) {
     if (typeof input !== 'string') {
         return '';
     }
@@ -50,12 +51,12 @@ function validatePassword(password) {
         return { isValid: false, message: 'Password must be a string' };
     }
     
-    if (password.length < 6) {
-        return { isValid: false, message: 'Password must be at least 6 characters long' };
+    if (password.length < PASSWORD.MIN_LENGTH) {
+        return { isValid: false, message: `Password must be at least ${PASSWORD.MIN_LENGTH} characters long` };
     }
     
-    if (password.length > 128) {
-        return { isValid: false, message: 'Password is too long (max 128 characters)' };
+    if (password.length > PASSWORD.MAX_LENGTH) {
+        return { isValid: false, message: `Password is too long (max ${PASSWORD.MAX_LENGTH} characters)` };
     }
     
     return { isValid: true };
@@ -73,12 +74,12 @@ function validateUsername(username) {
     
     const trimmed = username.trim();
     
-    if (trimmed.length < 3) {
-        return { isValid: false, message: 'Username must be at least 3 characters long' };
+    if (trimmed.length < LENGTH_LIMITS.USERNAME_MIN) {
+        return { isValid: false, message: `Username must be at least ${LENGTH_LIMITS.USERNAME_MIN} characters long` };
     }
     
-    if (trimmed.length > 50) {
-        return { isValid: false, message: 'Username is too long (max 50 characters)' };
+    if (trimmed.length > LENGTH_LIMITS.USERNAME_MAX) {
+        return { isValid: false, message: `Username is too long (max ${LENGTH_LIMITS.USERNAME_MAX} characters)` };
     }
     
     // Allow alphanumeric, underscore, and hyphen
@@ -95,7 +96,7 @@ function validateUsername(username) {
  * @param {number} maxLength - Maximum allowed length
  * @returns {string} Sanitized text
  */
-function sanitizeText(text, maxLength = 5000) {
+function sanitizeText(text, maxLength = LENGTH_LIMITS.MESSAGE_CONTENT_MAX) {
     if (typeof text !== 'string') {
         return '';
     }
