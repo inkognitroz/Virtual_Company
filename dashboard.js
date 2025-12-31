@@ -1,6 +1,19 @@
 // Dashboard JavaScript
 /* global API */
 
+// Utility function: Debounce to prevent excessive function calls
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
 const authToken = localStorage.getItem('authToken');

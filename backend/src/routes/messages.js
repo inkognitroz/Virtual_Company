@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const { sanitizeString, sanitizeText } = require('../utils/validation');
 
 const router = express.Router();
 
@@ -25,10 +26,22 @@ router.post('/', authenticateToken, (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Sanitize inputs
+        const sanitizedSender = sanitizeString(sender, 100);
+        const sanitizedSenderName = sanitizeString(senderName, 100);
+        const sanitizedAvatar = sanitizeString(avatar, 10);
+        const sanitizedContent = sanitizeText(content, 5000);
+        const sanitizedTime = sanitizeString(time, 50);
+        const sanitizedInstructions = sanitizeText(roleInstructions || '', 2000);
+
+        if (!sanitizedSender || !sanitizedSenderName || !sanitizedAvatar || !sanitizedContent) {
+            return res.status(400).json({ error: 'Invalid input data' });
+        }
+
         // Insert message
         const result = db.prepare(
             'INSERT INTO messages (user_id, sender, sender_name, avatar, content, time, role_instructions, is_ai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        ).run(req.user.id, sender, senderName, avatar, content, time, roleInstructions || null, isAI ? 1 : 0);
+        ).run(req.user.id, sanitizedSender, sanitizedSenderName, sanitizedAvatar, sanitizedContent, sanitizedTime, sanitizedInstructions || null, isAI ? 1 : 0);
 
         res.status(201).json({
             message: 'Message created successfully',

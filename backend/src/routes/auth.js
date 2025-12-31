@@ -3,6 +3,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const { JWT_SECRET } = require('../middleware/auth');
+const { 
+    sanitizeString, 
+    sanitizeEmail, 
+    validatePassword, 
+    validateUsername 
+} = require('../utils/validation');
 
 const router = express.Router();
 
@@ -16,8 +22,32 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
+        // Sanitize and validate email
+        const sanitizedEmail = sanitizeEmail(email);
+        if (!sanitizedEmail) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Validate username
+        const usernameValidation = validateUsername(username);
+        if (!usernameValidation.isValid) {
+            return res.status(400).json({ error: usernameValidation.message });
+        }
+
+        // Validate password
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({ error: passwordValidation.message });
+        }
+
+        // Sanitize name
+        const sanitizedName = sanitizeString(name, 100);
+        if (!sanitizedName) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+
         // Check if user already exists
-        const existingUser = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, username);
+        const existingUser = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(sanitizedEmail, username.trim());
         if (existingUser) {
             return res.status(400).json({ error: 'Username or email already exists' });
         }
@@ -26,11 +56,11 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert new user
-        const result = db.prepare('INSERT INTO users (email, username, password, name) VALUES (?, ?, ?, ?)').run(email, username, hashedPassword, name);
+        const result = db.prepare('INSERT INTO users (email, username, password, name) VALUES (?, ?, ?, ?)').run(sanitizedEmail, username.trim(), hashedPassword, sanitizedName);
 
         // Generate JWT token
         const token = jwt.sign(
-            { id: result.lastInsertRowid, username, email },
+            { id: result.lastInsertRowid, username: username.trim(), email: sanitizedEmail },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -38,7 +68,7 @@ router.post('/register', async (req, res) => {
         res.status(201).json({
             message: 'User registered successfully',
             token,
-            user: { id: result.lastInsertRowid, username, email, name }
+            user: { id: result.lastInsertRowid, username: username.trim(), email: sanitizedEmail, name: sanitizedName }
         });
     } catch (error) {
         console.error('Registration error:', error);
