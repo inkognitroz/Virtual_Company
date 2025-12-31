@@ -1,6 +1,8 @@
 const express = require('express');
 const db = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const { sanitizeString, sanitizeText } = require('../utils/validation');
+const { LENGTH_LIMITS } = require('../config/constants');
 
 const router = express.Router();
 
@@ -25,14 +27,24 @@ router.post('/', authenticateToken, (req, res) => {
             return res.status(400).json({ error: 'Role ID, name, and avatar are required' });
         }
 
+        // Sanitize inputs
+        const sanitizedName = sanitizeString(name, LENGTH_LIMITS.ROLE_NAME_MAX);
+        const sanitizedAvatar = sanitizeString(avatar, LENGTH_LIMITS.ROLE_AVATAR_MAX);
+        const sanitizedDescription = sanitizeText(description || '', LENGTH_LIMITS.ROLE_DESCRIPTION_MAX);
+        const sanitizedInstructions = sanitizeText(aiInstructions || '', LENGTH_LIMITS.AI_INSTRUCTIONS_MAX);
+
+        if (!sanitizedName || !sanitizedAvatar) {
+            return res.status(400).json({ error: 'Invalid name or avatar' });
+        }
+
         // Insert role
         const result = db.prepare(
             'INSERT INTO roles (id, user_id, name, avatar, description, ai_instructions) VALUES (?, ?, ?, ?, ?, ?)'
-        ).run(id, req.user.id, name, avatar, description || '', aiInstructions || '');
+        ).run(id, req.user.id, sanitizedName, sanitizedAvatar, sanitizedDescription, sanitizedInstructions);
 
         res.status(201).json({
             message: 'Role created successfully',
-            role: { id, name, avatar, description, aiInstructions }
+            role: { id, name: sanitizedName, avatar: sanitizedAvatar, description: sanitizedDescription, aiInstructions: sanitizedInstructions }
         });
     } catch (error) {
         console.error('Error creating role:', error);

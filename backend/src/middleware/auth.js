@@ -8,6 +8,14 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
+/**
+ * Middleware to authenticate JWT token from request headers
+ * Verifies the Bearer token and adds user info to request object
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next middleware function
+ * @returns {void}
+ */
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN

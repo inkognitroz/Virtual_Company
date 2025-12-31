@@ -1,6 +1,28 @@
 // Dashboard JavaScript
 /* global API */
 
+/**
+ * Debounce function to limit the rate at which a function is executed
+ * Useful for performance optimization on frequently called functions
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The delay in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Export debounce for use in other scripts or future features
+window.debounce = debounce;
+
 // Check if user is logged in
 const currentUser = JSON.parse(localStorage.getItem('virtualCompanyUser'));
 const authToken = localStorage.getItem('authToken');
@@ -221,7 +243,11 @@ function renderChatMessages() {
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
 
-// Helper function to escape HTML
+/**
+ * Escapes HTML special characters to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text safe for HTML insertion
+ */
 function escapeHtml(text) {
     return text
         .replace(/&/g, '&amp;')
@@ -231,7 +257,11 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
-// Copy message to clipboard
+/**
+ * Copies a chat message to clipboard
+ * Uses modern Clipboard API with fallback for older browsers
+ * @param {string} messageId - The ID of the message to copy
+ */
 function copyMessage(messageId) {
     const chatMessagesContainer = document.getElementById('chatMessages');
     const content = chatMessagesContainer.dataset[messageId];
@@ -256,8 +286,11 @@ function copyMessage(messageId) {
 // Make copyMessage accessible globally for onclick handlers
 window.copyMessage = copyMessage;
 
-// Fallback copy method for older browsers or non-HTTPS
-// Note: document.execCommand('copy') is deprecated but needed for legacy browser support
+/**
+ * Fallback method to copy text to clipboard for older browsers
+ * Uses deprecated document.execCommand for legacy support
+ * @param {string} text - Text to copy to clipboard
+ */
 function fallbackCopyToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;

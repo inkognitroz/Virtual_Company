@@ -72,6 +72,15 @@ function initializeDatabase() {
         )
     `);
 
+    // Create indices for better query performance
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_roles_user_id ON roles(user_id);
+        CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
+        CREATE INDEX IF NOT EXISTS idx_messages_user_created ON messages(user_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    `);
+
     console.log('Database initialized successfully');
 }
 
