@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 
 const authRoutes = require('./routes/auth');
 const rolesRoutes = require('./routes/roles');
@@ -13,6 +14,10 @@ const aiConfigRoutes = require('./routes/aiConfig');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Request logging - use 'combined' format in production, 'dev' in development
+const logFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+app.use(morgan(logFormat));
 
 // Security middleware - helmet for secure headers
 app.use(helmet());
@@ -78,15 +83,46 @@ app.use('/api/roles', rolesRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/ai-config', aiConfigRoutes);
 
-// Health check endpoint
+// Health check endpoint with detailed status
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Virtual Company API is running' });
+    const healthcheck = {
+        status: 'ok',
+        message: 'Virtual Company API is running',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    };
+    res.json(healthcheck);
+});
+
+// 404 handler - must be after all other routes
+app.use((req, res) => {
+    res.status(404).json({ 
+        error: 'Not Found',
+        message: 'The requested resource was not found',
+        path: req.path
+    });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    // Log error details
+    console.error('Unhandled error:', {
+        message: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+        path: req.path,
+        method: req.method
+    });
+    
+    // Don't leak error details in production
+    const errorMessage = process.env.NODE_ENV === 'production' 
+        ? 'Internal server error' 
+        : err.message;
+    
+    res.status(err.status || 500).json({ 
+        error: errorMessage,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
 });
 
 // Start server
